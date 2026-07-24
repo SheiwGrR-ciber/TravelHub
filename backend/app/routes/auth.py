@@ -89,12 +89,17 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
         email = payload.get("sub")
         if email is None:
             raise HTTPException(status_code=401, detail="Token inválido")
-        return {"email": email, "role": payload.get("role")}
+        
+        db = next(get_db())
+        user = db.query(User).filter(User.email == email).first()
+        if not user:
+            raise HTTPException(status_code=401, detail="Usuario no encontrado")
+        
+        return {"id": user.id, "email": user.email, "role": user.role}
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token expirado")
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Token inválido")
-
 @router.get("/me")
 def get_me(current_user = Depends(get_current_user)):
     return current_user
