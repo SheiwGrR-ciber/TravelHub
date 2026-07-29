@@ -49,6 +49,7 @@ import com.travelhub.ui.theme.CremaCalido
 import com.travelhub.ui.theme.Error
 import com.travelhub.ui.theme.MarronOscuro
 import com.travelhub.ui.theme.TealProfundo
+import com.travelhub.ui.theme.VerdeExito
 import com.travelhub.ui.theme.Terracota
 import com.travelhub.ui.theme.TextoClaro
 import com.travelhub.ui.theme.TextoOscuro
