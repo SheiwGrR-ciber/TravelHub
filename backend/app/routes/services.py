@@ -6,7 +6,7 @@ from app.routes.auth import get_current_user
 
 router = APIRouter(prefix="/services", tags=["services"])
 
-@router.post("/")
+@router.post("")
 def create_service(service: ServiceCreate, current_user = Depends(get_current_user)):
     db = next(get_db())
     
@@ -26,7 +26,7 @@ def create_service(service: ServiceCreate, current_user = Depends(get_current_us
     db.refresh(new_service)
     return new_service
 
-@router.get("/")
+@router.get("")
 def get_services(
     type: str = Query(None, description="Filtrar por tipo: guia, hotel"),
     location: str = Query(None, description="Filtrar por ubicación"),

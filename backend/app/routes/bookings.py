@@ -7,7 +7,7 @@ from app.routes.auth import get_current_user
 
 router = APIRouter(prefix="/bookings", tags=["bookings"])
 
-@router.post("/")
+@router.post("")
 def create_booking(booking: BookingCreate, current_user = Depends(get_current_user)):
     db = next(get_db())
     
@@ -31,7 +31,7 @@ def create_booking(booking: BookingCreate, current_user = Depends(get_current_us
     db.refresh(new_booking)
     return new_booking
 
-@router.get("/")
+@router.get("")
 def get_bookings(current_user = Depends(get_current_user)):
     db = next(get_db())
     if current_user["role"] == "turista":

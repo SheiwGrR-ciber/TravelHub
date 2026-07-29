@@ -8,7 +8,7 @@ from app.routes.auth import get_current_user
 
 router = APIRouter(prefix="/itineraries", tags=["itineraries"])
 
-@router.post("/")
+@router.post("")
 def create_itinerary(itinerary: ItineraryCreate, current_user = Depends(get_current_user)):
     db = next(get_db())
     
@@ -25,7 +25,7 @@ def create_itinerary(itinerary: ItineraryCreate, current_user = Depends(get_curr
     db.refresh(new_itinerary)
     return new_itinerary
 
-@router.get("/")
+@router.get("")
 def get_itineraries(current_user = Depends(get_current_user)):
     db = next(get_db())
     return db.query(Itinerary).filter(Itinerary.tourist_id == current_user["id"]).all()
