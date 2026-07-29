@@ -32,6 +32,7 @@ data class ActionCard(
     val onClick: () -> Unit
 )
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     onNavigateToCatalog: () -> Unit,
