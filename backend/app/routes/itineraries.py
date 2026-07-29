@@ -1,19 +1,12 @@
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
-from app.db.database import SessionLocal
+from app.db.database import get_db
 from app.models.itinerary import Itinerary
 from app.models.booking import Booking
 from app.schemas.itinerary import ItineraryCreate
 from app.routes.auth import get_current_user
 
 router = APIRouter(prefix="/itineraries", tags=["itineraries"])
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 @router.post("/")
 def create_itinerary(itinerary: ItineraryCreate, current_user = Depends(get_current_user)):

@@ -1,19 +1,29 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from app.db.database import engine, Base
 from app.models import User, Service, Booking, Itinerary, Message, Review
-from app.routes import auth, services
-from app.routes import auth, services, bookings  # Agrega bookings
-from app.routes import auth, services, bookings, itineraries, messages  # Agrega itineraries y messages
+from app.routes import auth, services, bookings, itineraries, messages, reviews, costs, ws
 
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="TravelHub API")
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 app.include_router(auth.router)
 app.include_router(services.router)
-app.include_router(bookings.router)  # Agrega esta línea
+app.include_router(bookings.router)
 app.include_router(itineraries.router)
 app.include_router(messages.router)
+app.include_router(reviews.router)
+app.include_router(costs.router)
+app.mount("", ws.router)
 
 @app.get("/")
 def root():

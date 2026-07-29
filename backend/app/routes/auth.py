@@ -4,25 +4,15 @@ from fastapi import Depends
 from fastapi.security import OAuth2PasswordBearer
 from app.schemas.token import Token, LoginRequest
 from fastapi import APIRouter, HTTPException
-from sqlalchemy.orm import Session
-from app.db.database import SessionLocal
+from app.db.database import get_db
 from app.models.user import User
 from app.schemas.user import UserCreate
+from app.config import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
 import hashlib
 import os
 
-SECRET_KEY = "mi_clave_secreta_super_segura"
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 router = APIRouter(prefix="/auth", tags=["auth"])
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 def hash_password(password: str) -> str:
     salt = os.urandom(32).hex()
@@ -78,11 +68,6 @@ def login(user: LoginRequest):
     token = create_access_token({"sub": db_user.email, "role": db_user.role})
     return {"access_token": token, "token_type": "bearer"}
 
-from fastapi import Depends
-from fastapi.security import OAuth2PasswordBearer
-
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
-
 def get_current_user(token: str = Depends(oauth2_scheme)):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
@@ -100,6 +85,7 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
         raise HTTPException(status_code=401, detail="Token expirado")
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Token inválido")
+
 @router.get("/me")
 def get_me(current_user = Depends(get_current_user)):
     return current_user
