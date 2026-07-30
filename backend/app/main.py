@@ -1,10 +1,16 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import text
 from app.db.database import engine, Base
 from app.models import User, Service, Booking, Itinerary, Message, Review
 from app.routes import auth, services, bookings, itineraries, messages, reviews, costs, ws
 
 Base.metadata.create_all(bind=engine)
+
+with engine.connect() as conn:
+    conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_code VARCHAR"))
+    conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_code_expires TIMESTAMP"))
+    conn.commit()
 
 app = FastAPI(title="TravelHub API")
 
