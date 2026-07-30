@@ -11,6 +11,15 @@ interface TravelHubApi {
     @POST("auth/login")
     suspend fun login(@Body login: LoginRequest): Response<TokenResponse>
 
+    @POST("auth/verify")
+    suspend fun verifyEmail(@Body request: VerifyRequest): Response<Map<String, Any>>
+
+    @POST("auth/resend-code")
+    suspend fun resendVerificationCode(@Body request: ResendRequest): Response<Map<String, Any>>
+
+    @POST("auth/google")
+    suspend fun googleAuth(@Body request: GoogleAuthRequest): Response<Map<String, Any>>
+
     @GET("auth/me")
     suspend fun getProfile(@Header("Authorization") token: String): Response<UserResponse>
 

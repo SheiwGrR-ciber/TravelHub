@@ -32,7 +32,7 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RegisterScreen(
-    onRegisterSuccess: () -> Unit,
+    onRegisterSuccess: (email: String) -> Unit,
     onGoToLogin: () -> Unit
 ) {
     val scope = rememberCoroutineScope()
@@ -325,7 +325,7 @@ private suspend fun performRegister(
     password: String,
     confirmPassword: String,
     role: String,
-    onRegisterSuccess: () -> Unit,
+    onRegisterSuccess: (String) -> Unit,
     setLoading: (Boolean) -> Unit,
     setError: (String?) -> Unit
 ) {
@@ -344,7 +344,7 @@ private suspend fun performRegister(
         }
         val response = ApiClient.api.register(UserCreate(name, email, password, role))
         if (response.isSuccessful) {
-            onRegisterSuccess()
+            onRegisterSuccess(email)
         } else {
             val code = response.code()
             val msg = when (code) {

@@ -3,6 +3,8 @@ package com.travelhub.data.model
 data class LoginRequest(val email: String, val password: String)
 data class TokenResponse(val access_token: String, val token_type: String)
 data class UserCreate(val name: String, val email: String, val password: String, val role: String)
+data class VerifyRequest(val email: String, val code: String)
+data class ResendRequest(val email: String)
 data class UserResponse(val id: Int, val email: String, val role: String)
 data class ServiceCreate(
     val type: String, val name: String, val description: String,
@@ -43,6 +45,7 @@ data class ReviewResponse(
     val created_at: String?
 )
 data class CostCalculateRequest(val booking_ids: List<Int>)
+data class GoogleAuthRequest(val id_token: String)
 data class CostResponse(
     val total: Double, val breakdown: Map<String, Double>,
     val details: List<CostDetail>

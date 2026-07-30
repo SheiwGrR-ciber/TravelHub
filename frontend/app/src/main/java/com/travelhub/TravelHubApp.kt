@@ -17,6 +17,7 @@ import com.travelhub.ui.itinerary.ItineraryScreen
 import com.travelhub.ui.costs.CostCalculatorScreen
 import com.travelhub.ui.chat.ChatScreen
 import com.travelhub.ui.reviews.ReviewsScreen
+import com.travelhub.ui.auth.VerifyEmailScreen
 import com.travelhub.ui.provider.ProviderPanelScreen
 import com.travelhub.ui.provider.ManageServiceScreen
 import com.travelhub.ui.provider.ProviderBookingsScreen
@@ -40,12 +41,24 @@ fun TravelHubApp() {
         }
         composable(Screen.Register.route) {
             RegisterScreen(
-                onRegisterSuccess = {
-                    navController.navigate(Screen.Home.route) {
-                        popUpTo(Screen.Login.route) { inclusive = true }
+                onRegisterSuccess = { email ->
+                    navController.navigate(Screen.VerifyEmail.createRoute(email)) {
+                        popUpTo(Screen.Register.route) { inclusive = true }
                     }
                 },
                 onGoToLogin = { navController.popBackStack() }
+            )
+        }
+        composable(Screen.VerifyEmail.route) { backStackEntry ->
+            val email = backStackEntry.arguments?.getString("email") ?: return@composable
+            VerifyEmailScreen(
+                email = email,
+                onVerificationSuccess = {
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                },
+                onBack = { navController.popBackStack() }
             )
         }
         composable(Screen.Home.route) {
