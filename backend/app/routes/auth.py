@@ -59,6 +59,7 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
         password_hash=hashed,
         role=user.role,
         verified=False,
+        approved=False if user.role == "prestador" else True,
         verification_code=code,
         verification_code_expires=code_expires
     )
@@ -169,7 +170,7 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
         if not user:
             raise HTTPException(status_code=401, detail="Usuario no encontrado")
 
-        return {"id": user.id, "email": user.email, "role": user.role}
+        return {"id": user.id, "email": user.email, "role": user.role, "approved": user.approved}
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token expirado")
     except jwt.InvalidTokenError:

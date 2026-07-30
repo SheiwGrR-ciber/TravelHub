@@ -12,6 +12,8 @@ def create_service(service: ServiceCreate, db: Session = Depends(get_db), curren
     
     if current_user["role"] != "prestador":
         raise HTTPException(status_code=403, detail="Solo prestadores pueden crear servicios")
+    if not current_user.get("approved"):
+        raise HTTPException(status_code=403, detail="Tu cuenta de prestador está pendiente de aprobación por un administrador")
     
     new_service = Service(
         provider_id=current_user["id"],
