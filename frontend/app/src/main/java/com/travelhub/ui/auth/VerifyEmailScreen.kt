@@ -12,7 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextAlign
+
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.travelhub.data.api.ApiClient
@@ -30,13 +30,13 @@ fun VerifyEmailScreen(
     onBack: () -> Unit
 ) {
     val scope = rememberCoroutineScope()
-    var code by remember { mutableStateOf("") }
+    var verificationCode by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var successMessage by remember { mutableStateOf<String?>(null) }
 
     fun verify() {
-        if (code.length != 6) {
+        if (verificationCode.length != 6) {
             errorMessage = "Ingresa el código de 6 dígitos"
             return
         }
@@ -44,7 +44,7 @@ fun VerifyEmailScreen(
             isLoading = true
             errorMessage = null
             try {
-                val response = ApiClient.api.verifyEmail(VerifyRequest(email, code))
+                val response = ApiClient.api.verifyEmail(VerifyRequest(email, verificationCode))
                 if (response.isSuccessful) {
                     val body = response.body()
                     val token = body?.get("access_token") as? String
@@ -128,14 +128,15 @@ fun VerifyEmailScreen(
             Spacer(modifier = Modifier.height(32.dp))
 
             OutlinedTextField(
-                value = code,
-                onValueChange = { if (it.length <= 6) code = it.filter { c -> c.isDigit() } },
+                value = verificationCode,
+                onValueChange = { newVal ->
+                    if (newVal.length <= 6) verificationCode = newVal.filter(Char::isDigit)
+                },
                 label = { Text("Código de 6 dígitos") },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
                 shape = MaterialTheme.shapes.medium,
-                textAlign = TextAlign.Center,
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = Terracota,
                     focusedLabelColor = Terracota,
@@ -156,7 +157,7 @@ fun VerifyEmailScreen(
 
             Button(
                 onClick = { verify() },
-                enabled = !isLoading && code.length == 6,
+                enabled = !isLoading && verificationCode.length == 6,
                 modifier = Modifier.fillMaxWidth().height(50.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Terracota),
                 shape = MaterialTheme.shapes.medium
