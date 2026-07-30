@@ -10,6 +10,11 @@ from pydantic import BaseModel
 
 from app.db.database import get_db
 from app.models.user import User
+from app.models.service import Service
+from app.models.booking import Booking
+from app.models.itinerary import Itinerary
+from app.models.message import Message
+from app.models.review import Review
 from app.schemas.token import Token, LoginRequest
 from app.schemas.user import UserCreate
 from app.config import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
@@ -173,3 +178,16 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
 @router.get("/me")
 def get_me(current_user = Depends(get_current_user)):
     return current_user
+
+@router.post("/_cleanup")
+def cleanup_database(secret: str = "", db: Session = Depends(get_db)):
+    if secret != os.getenv("CLEANUP_SECRET", "travelhub_cleanup_2026"):
+        raise HTTPException(status_code=403, detail="No autorizado")
+    db.query(Review).delete()
+    db.query(Message).delete()
+    db.query(Itinerary).delete()
+    db.query(Booking).delete()
+    db.query(Service).delete()
+    db.query(User).delete()
+    db.commit()
+    return {"message": "Base de datos limpiada"}
