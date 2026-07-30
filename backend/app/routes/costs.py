@@ -4,12 +4,13 @@ from app.db.database import get_db
 from app.models.booking import Booking
 from app.models.service import Service
 from app.routes.auth import get_current_user
-from typing import List
+from app.schemas.cost import CostCalculateRequest
 
 router = APIRouter(prefix="/costs", tags=["costs"])
 
 @router.post("/calculate")
-def calculate_costs(booking_ids: List[int], db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+def calculate_costs(body: CostCalculateRequest, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+    booking_ids = body.booking_ids
     
     total = 0.0
     breakdown = {"guia": 0.0, "hotel": 0.0}

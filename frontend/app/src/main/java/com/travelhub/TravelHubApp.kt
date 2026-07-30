@@ -16,6 +16,7 @@ import com.travelhub.ui.bookings.NewBookingScreen
 import com.travelhub.ui.itinerary.ItineraryScreen
 import com.travelhub.ui.costs.CostCalculatorScreen
 import com.travelhub.ui.chat.ChatScreen
+import com.travelhub.ui.reviews.ReviewsScreen
 import com.travelhub.ui.provider.ProviderPanelScreen
 import com.travelhub.ui.provider.ManageServiceScreen
 import com.travelhub.ui.provider.ProviderBookingsScreen
@@ -124,6 +125,10 @@ fun TravelHubApp() {
                 serviceName = serviceName,
                 onBack = { navController.popBackStack() }
             )
+        }
+        composable(Screen.Reviews.route) { backStackEntry ->
+            val serviceId = backStackEntry.arguments?.getString("serviceId")?.toIntOrNull() ?: return@composable
+            ReviewsScreen(serviceId = serviceId, onBack = { navController.popBackStack() })
         }
         composable(Screen.ProviderPanel.route) {
             ProviderPanelScreen(

@@ -1,3 +1,5 @@
+import datetime
+from typing import Optional
 from pydantic import BaseModel
 
 class ReviewCreate(BaseModel):
@@ -12,6 +14,7 @@ class ReviewResponse(BaseModel):
     service_id: int
     rating: int
     comment: str
+    created_at: Optional[datetime.datetime] = None
 
     class Config:
         from_attributes = True
