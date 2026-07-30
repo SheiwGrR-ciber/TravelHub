@@ -9,8 +9,7 @@ from app.routes.auth import get_current_user
 router = APIRouter(prefix="/itineraries", tags=["itineraries"])
 
 @router.post("")
-def create_itinerary(itinerary: ItineraryCreate, current_user = Depends(get_current_user)):
-    db = next(get_db())
+def create_itinerary(itinerary: ItineraryCreate, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
     
     if current_user["role"] != "turista":
         raise HTTPException(status_code=403, detail="Solo turistas pueden crear itinerarios")
@@ -26,13 +25,11 @@ def create_itinerary(itinerary: ItineraryCreate, current_user = Depends(get_curr
     return new_itinerary
 
 @router.get("")
-def get_itineraries(current_user = Depends(get_current_user)):
-    db = next(get_db())
+def get_itineraries(db: Session = Depends(get_db), current_user = Depends(get_current_user)):
     return db.query(Itinerary).filter(Itinerary.tourist_id == current_user["id"]).all()
 
 @router.get("/{itinerary_id}")
-def get_itinerary(itinerary_id: int, current_user = Depends(get_current_user)):
-    db = next(get_db())
+def get_itinerary(itinerary_id: int, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
     itinerary = db.query(Itinerary).filter(Itinerary.id == itinerary_id).first()
     if not itinerary:
         raise HTTPException(status_code=404, detail="Itinerario no encontrado")
@@ -41,8 +38,7 @@ def get_itinerary(itinerary_id: int, current_user = Depends(get_current_user)):
     return itinerary
 
 @router.post("/{itinerary_id}/add-booking/{booking_id}")
-def add_booking_to_itinerary(itinerary_id: int, booking_id: int, current_user = Depends(get_current_user)):
-    db = next(get_db())
+def add_booking_to_itinerary(itinerary_id: int, booking_id: int, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
     
     itinerary = db.query(Itinerary).filter(Itinerary.id == itinerary_id).first()
     if not itinerary:

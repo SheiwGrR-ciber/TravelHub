@@ -3,12 +3,12 @@ from app.db.database import get_db
 from app.models.service import Service
 from app.schemas.service import ServiceCreate, ServiceUpdate
 from app.routes.auth import get_current_user
+from sqlalchemy.orm import Session
 
 router = APIRouter(prefix="/services", tags=["services"])
 
 @router.post("")
-def create_service(service: ServiceCreate, current_user = Depends(get_current_user)):
-    db = next(get_db())
+def create_service(service: ServiceCreate, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
     
     if current_user["role"] != "prestador":
         raise HTTPException(status_code=403, detail="Solo prestadores pueden crear servicios")
@@ -28,6 +28,7 @@ def create_service(service: ServiceCreate, current_user = Depends(get_current_us
 
 @router.get("")
 def get_services(
+    db: Session = Depends(get_db),
     type: str = Query(None, description="Filtrar por tipo: guia, hotel"),
     location: str = Query(None, description="Filtrar por ubicación"),
     min_price: float = Query(None, description="Precio mínimo"),
@@ -35,7 +36,6 @@ def get_services(
     min_rating: float = Query(None, description="Calificación mínima"),
     available: bool = Query(None, description="Disponible")
 ):
-    db = next(get_db())
     query = db.query(Service)
     
     if type:
@@ -54,16 +54,14 @@ def get_services(
     return query.all()
 
 @router.get("/{service_id}")
-def get_service(service_id: int):
-    db = next(get_db())
+def get_service(service_id: int, db: Session = Depends(get_db)):
     service = db.query(Service).filter(Service.id == service_id).first()
     if not service:
         raise HTTPException(status_code=404, detail="Servicio no encontrado")
     return service
 
 @router.put("/{service_id}")
-def update_service(service_id: int, service_data: ServiceUpdate, current_user = Depends(get_current_user)):
-    db = next(get_db())
+def update_service(service_id: int, service_data: ServiceUpdate, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
     
     service = db.query(Service).filter(Service.id == service_id).first()
     if not service:
@@ -80,8 +78,7 @@ def update_service(service_id: int, service_data: ServiceUpdate, current_user = 
     return service
 
 @router.delete("/{service_id}")
-def delete_service(service_id: int, current_user = Depends(get_current_user)):
-    db = next(get_db())
+def delete_service(service_id: int, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
     
     service = db.query(Service).filter(Service.id == service_id).first()
     if not service:

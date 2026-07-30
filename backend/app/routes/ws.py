@@ -46,56 +46,62 @@ async def websocket_chat(websocket: WebSocket, user_id: int):
                 content = data["content"]
 
                 db = next(get_db())
-                booking = db.query(Booking).filter(Booking.id == booking_id).first()
-                if not booking:
-                    await websocket.send_json({"error": "Reserva no encontrada"})
-                    continue
+                try:
+                    booking = db.query(Booking).filter(Booking.id == booking_id).first()
+                    if not booking:
+                        await websocket.send_json({"error": "Reserva no encontrada"})
+                        continue
 
-                service = db.query(Service).filter(Service.id == booking.service_id).first()
-                if user_id != booking.tourist_id and user_id != service.provider_id:
-                    await websocket.send_json({"error": "No autorizado"})
-                    continue
+                    service = db.query(Service).filter(Service.id == booking.service_id).first()
+                    if user_id != booking.tourist_id and user_id != service.provider_id:
+                        await websocket.send_json({"error": "No autorizado"})
+                        continue
 
-                new_message = Message(
-                    sender_id=user_id,
-                    receiver_id=receiver_id,
-                    booking_id=booking_id,
-                    content=content
-                )
-                db.add(new_message)
-                db.commit()
-                db.refresh(new_message)
+                    new_message = Message(
+                        sender_id=user_id,
+                        receiver_id=receiver_id,
+                        booking_id=booking_id,
+                        content=content
+                    )
+                    db.add(new_message)
+                    db.commit()
+                    db.refresh(new_message)
 
-                message_data = {
-                    "id": new_message.id,
-                    "sender_id": new_message.sender_id,
-                    "receiver_id": new_message.receiver_id,
-                    "booking_id": new_message.booking_id,
-                    "content": new_message.content,
-                    "timestamp": str(new_message.timestamp)
-                }
+                    message_data = {
+                        "id": new_message.id,
+                        "sender_id": new_message.sender_id,
+                        "receiver_id": new_message.receiver_id,
+                        "booking_id": new_message.booking_id,
+                        "content": new_message.content,
+                        "timestamp": str(new_message.timestamp)
+                    }
 
-                await manager.send_to_user(receiver_id, {
-                    "action": "new_message",
-                    "message": message_data
-                })
+                    await manager.send_to_user(receiver_id, {
+                        "action": "new_message",
+                        "message": message_data
+                    })
 
-                await websocket.send_json({
-                    "action": "message_sent",
-                    "message": message_data
-                })
+                    await websocket.send_json({
+                        "action": "message_sent",
+                        "message": message_data
+                    })
+                finally:
+                    db.close()
 
             elif action == "mark_read":
                 booking_id = data["booking_id"]
                 db = next(get_db())
-                db.query(Message).filter(
-                    Message.booking_id == booking_id,
-                    Message.receiver_id == user_id,
-                    Message.read == False
-                ).update({"read": True})
-                db.commit()
+                try:
+                    db.query(Message).filter(
+                        Message.booking_id == booking_id,
+                        Message.receiver_id == user_id,
+                        Message.read == False
+                    ).update({"read": True})
+                    db.commit()
 
-                await websocket.send_json({"action": "read_confirmed", "booking_id": booking_id})
+                    await websocket.send_json({"action": "read_confirmed", "booking_id": booking_id})
+                finally:
+                    db.close()
 
     except WebSocketDisconnect:
         manager.disconnect(websocket, user_id)

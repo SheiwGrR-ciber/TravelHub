@@ -5,12 +5,12 @@ from app.models.booking import Booking
 from app.models.service import Service
 from app.schemas.message import MessageCreate
 from app.routes.auth import get_current_user
+from sqlalchemy.orm import Session
 
 router = APIRouter(prefix="/messages", tags=["messages"])
 
 @router.post("/")
-def send_message(message: MessageCreate, current_user = Depends(get_current_user)):
-    db = next(get_db())
+def send_message(message: MessageCreate, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
     
     booking = db.query(Booking).filter(Booking.id == message.booking_id).first()
     if not booking:
@@ -32,8 +32,7 @@ def send_message(message: MessageCreate, current_user = Depends(get_current_user
     return new_message
 
 @router.get("/booking/{booking_id}")
-def get_messages(booking_id: int, current_user = Depends(get_current_user)):
-    db = next(get_db())
+def get_messages(booking_id: int, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
     
     booking = db.query(Booking).filter(Booking.id == booking_id).first()
     if not booking:

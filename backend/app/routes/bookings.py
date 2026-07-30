@@ -4,12 +4,12 @@ from app.models.booking import Booking
 from app.models.service import Service
 from app.schemas.booking import BookingCreate, BookingStatusUpdate
 from app.routes.auth import get_current_user
+from sqlalchemy.orm import Session
 
 router = APIRouter(prefix="/bookings", tags=["bookings"])
 
 @router.post("")
-def create_booking(booking: BookingCreate, current_user = Depends(get_current_user)):
-    db = next(get_db())
+def create_booking(booking: BookingCreate, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
     
     if current_user["role"] != "turista":
         raise HTTPException(status_code=403, detail="Solo turistas pueden reservar")
@@ -32,8 +32,7 @@ def create_booking(booking: BookingCreate, current_user = Depends(get_current_us
     return new_booking
 
 @router.get("")
-def get_bookings(current_user = Depends(get_current_user)):
-    db = next(get_db())
+def get_bookings(db: Session = Depends(get_db), current_user = Depends(get_current_user)):
     if current_user["role"] == "turista":
         return db.query(Booking).filter(Booking.tourist_id == current_user["id"]).all()
     elif current_user["role"] == "prestador":
@@ -43,8 +42,7 @@ def get_bookings(current_user = Depends(get_current_user)):
     return []
 
 @router.get("/{booking_id}")
-def get_booking(booking_id: int, current_user = Depends(get_current_user)):
-    db = next(get_db())
+def get_booking(booking_id: int, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
     booking = db.query(Booking).filter(Booking.id == booking_id).first()
     if not booking:
         raise HTTPException(status_code=404, detail="Reserva no encontrada")
@@ -56,8 +54,7 @@ def get_booking(booking_id: int, current_user = Depends(get_current_user)):
     return booking
 
 @router.put("/{booking_id}/status")
-def update_booking_status(booking_id: int, status_data: BookingStatusUpdate, current_user = Depends(get_current_user)):
-    db = next(get_db())
+def update_booking_status(booking_id: int, status_data: BookingStatusUpdate, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
     
     booking = db.query(Booking).filter(Booking.id == booking_id).first()
     if not booking:

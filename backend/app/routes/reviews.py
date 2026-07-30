@@ -11,8 +11,7 @@ from sqlalchemy import func
 router = APIRouter(prefix="/reviews", tags=["reviews"])
 
 @router.post("/")
-def create_review(review: ReviewCreate, current_user = Depends(get_current_user)):
-    db = next(get_db())
+def create_review(review: ReviewCreate, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
 
     if current_user["role"] != "turista":
         raise HTTPException(status_code=403, detail="Solo turistas pueden calificar")
@@ -51,12 +50,10 @@ def create_review(review: ReviewCreate, current_user = Depends(get_current_user)
     return new_review
 
 @router.get("/service/{service_id}")
-def get_service_reviews(service_id: int):
-    db = next(get_db())
+def get_service_reviews(service_id: int, db: Session = Depends(get_db)):
     reviews = db.query(Review).filter(Review.service_id == service_id).order_by(Review.created_at.desc()).all()
     return reviews
 
 @router.get("/my")
-def get_my_reviews(current_user = Depends(get_current_user)):
-    db = next(get_db())
+def get_my_reviews(db: Session = Depends(get_db), current_user = Depends(get_current_user)):
     return db.query(Review).filter(Review.tourist_id == current_user["id"]).all()

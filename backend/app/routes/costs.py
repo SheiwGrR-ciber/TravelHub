@@ -9,8 +9,7 @@ from typing import List
 router = APIRouter(prefix="/costs", tags=["costs"])
 
 @router.post("/calculate")
-def calculate_costs(booking_ids: List[int], current_user = Depends(get_current_user)):
-    db = next(get_db())
+def calculate_costs(booking_ids: List[int], db: Session = Depends(get_db), current_user = Depends(get_current_user)):
     
     total = 0.0
     breakdown = {"guia": 0.0, "hotel": 0.0}
