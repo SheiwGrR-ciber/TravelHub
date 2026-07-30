@@ -1,6 +1,7 @@
 import smtplib
 import random
 import os
+import threading
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
@@ -13,12 +14,12 @@ SMTP_FROM = os.getenv("SMTP_FROM", SMTP_USER)
 def generate_verification_code() -> str:
     return str(random.randint(100000, 999999))
 
-def send_verification_email(to_email: str, code: str) -> bool:
-    if not SMTP_USER or not SMTP_PASSWORD:
-        print(f"[EMAIL SIMULATED] To: {to_email}, Code: {code}")
-        return True
-
+def _send_email(to_email: str, code: str):
     try:
+        if not SMTP_USER or not SMTP_PASSWORD:
+            print(f"[EMAIL SIMULATED] To: {to_email}, Code: {code}")
+            return
+
         msg = MIMEMultipart()
         msg["From"] = SMTP_FROM
         msg["To"] = to_email
@@ -38,12 +39,14 @@ def send_verification_email(to_email: str, code: str) -> bool:
 
         msg.attach(MIMEText(body, "html"))
 
-        with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
+        with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=10) as server:
             server.starttls()
             server.login(SMTP_USER, SMTP_PASSWORD)
             server.send_message(msg)
 
-        return True
+        print(f"[EMAIL SENT] To: {to_email}")
     except Exception as e:
-        print(f"Error sending email: {e}")
-        return False
+        print(f"[EMAIL FAILED] To: {to_email}, Error: {e}")
+
+def send_verification_email(to_email: str, code: str):
+    threading.Thread(target=_send_email, args=(to_email, code), daemon=True).start()
