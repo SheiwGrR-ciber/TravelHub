@@ -13,7 +13,7 @@ from app.models.user import User
 from app.schemas.token import Token, LoginRequest
 from app.schemas.user import UserCreate
 from app.config import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
-from app.email_utils import generate_verification_code, send_verification_email
+from app.email_utils import generate_verification_code, send_verification_email, SMTP_USER
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -67,7 +67,12 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
 
     send_verification_email(user.email, code)
 
-    return {"message": "Usuario creado. Revisa tu correo para el código de verificación.", "id": new_user.id, "email": new_user.email}
+    return {
+        "message": "Usuario creado. Revisa tu correo para el código de verificación.",
+        "id": new_user.id,
+        "email": new_user.email,
+        "code": code
+    }
 
 @router.post("/verify")
 def verify_email(body: VerifyRequest, db: Session = Depends(get_db)):

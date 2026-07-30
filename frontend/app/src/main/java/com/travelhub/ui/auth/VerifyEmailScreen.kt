@@ -26,11 +26,13 @@ import kotlinx.coroutines.launch
 @Composable
 fun VerifyEmailScreen(
     email: String,
+    initialCode: String = "",
     onVerificationSuccess: () -> Unit,
     onBack: () -> Unit
 ) {
     val scope = rememberCoroutineScope()
-    var verificationCode by remember { mutableStateOf("") }
+    var verificationCode by remember { mutableStateOf(initialCode) }
+    var showCodeHint by remember { mutableStateOf(initialCode.isNotBlank()) }
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var successMessage by remember { mutableStateOf<String?>(null) }
@@ -124,6 +126,22 @@ fun VerifyEmailScreen(
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(top = 8.dp)
             )
+
+            if (showCodeHint && initialCode.isNotBlank()) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = DoradoOscuro.copy(alpha = 0.15f)),
+                    shape = MaterialTheme.shapes.medium
+                ) {
+                    Text(
+                        text = "No te llegó el correo? Usa este código: $initialCode",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MarronOscuro,
+                        modifier = Modifier.padding(12.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+            }
 
             Spacer(modifier = Modifier.height(32.dp))
 

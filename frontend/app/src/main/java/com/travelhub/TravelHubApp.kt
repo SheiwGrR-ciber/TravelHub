@@ -41,8 +41,8 @@ fun TravelHubApp() {
         }
         composable(Screen.Register.route) {
             RegisterScreen(
-                onRegisterSuccess = { email ->
-                    navController.navigate(Screen.VerifyEmail.createRoute(email)) {
+                onRegisterSuccess = { email, code ->
+                    navController.navigate(Screen.VerifyEmail.createRoute(email, code)) {
                         popUpTo(Screen.Register.route) { inclusive = true }
                     }
                 },
@@ -51,8 +51,10 @@ fun TravelHubApp() {
         }
         composable(Screen.VerifyEmail.route) { backStackEntry ->
             val email = backStackEntry.arguments?.getString("email") ?: return@composable
+            val code = backStackEntry.arguments?.getString("code") ?: ""
             VerifyEmailScreen(
                 email = email,
+                initialCode = code,
                 onVerificationSuccess = {
                     navController.navigate(Screen.Home.route) {
                         popUpTo(0) { inclusive = true }
