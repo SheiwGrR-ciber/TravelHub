@@ -21,6 +21,8 @@ import com.travelhub.ui.auth.VerifyEmailScreen
 import com.travelhub.ui.provider.ProviderPanelScreen
 import com.travelhub.ui.provider.ManageServiceScreen
 import com.travelhub.ui.provider.ProviderBookingsScreen
+import com.travelhub.ui.admin.AdminPanelScreen
+import com.travelhub.ui.itinerary.ItineraryBuilderScreen
 import com.travelhub.util.TokenManager
 
 @Composable
@@ -75,6 +77,11 @@ fun TravelHubApp() {
                         navController.navigate(Screen.ProviderPanel.route)
                     }
                 },
+                onNavigateToAdminPanel = {
+                    if (TokenManager.getUserRole() == "admin") {
+                        navController.navigate(Screen.AdminPanel.route)
+                    }
+                },
                 onLogout = {
                     TokenManager.logout()
                     navController.navigate(Screen.Login.route) {
@@ -127,7 +134,19 @@ fun TravelHubApp() {
             )
         }
         composable(Screen.Itinerary.route) {
-            ItineraryScreen(onBack = { navController.popBackStack() })
+            ItineraryScreen(
+                onBack = { navController.popBackStack() },
+                onOpenBuilder = { itineraryId ->
+                    navController.navigate(Screen.ItineraryBuilder.createRoute(itineraryId))
+                }
+            )
+        }
+        composable(Screen.ItineraryBuilder.route) { backStackEntry ->
+            val itineraryId = backStackEntry.arguments?.getString("itineraryId")?.toIntOrNull() ?: 0
+            ItineraryBuilderScreen(
+                itineraryId = itineraryId,
+                onBack = { navController.popBackStack() }
+            )
         }
         composable(Screen.CostCalculator.route) {
             CostCalculatorScreen(onBack = { navController.popBackStack() })
@@ -172,6 +191,9 @@ fun TravelHubApp() {
                 },
                 onBack = { navController.popBackStack() }
             )
+        }
+        composable(Screen.AdminPanel.route) {
+            AdminPanelScreen(onBack = { navController.popBackStack() })
         }
     }
 }

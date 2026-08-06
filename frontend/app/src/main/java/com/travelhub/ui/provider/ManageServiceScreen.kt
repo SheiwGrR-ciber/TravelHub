@@ -255,7 +255,7 @@ fun ManageServiceScreen(
             Button(
                 onClick = {
                     val priceVal = price.toDoubleOrNull()
-                    if (name.isBlank() || priceVal == null || priceVal <= 0) {
+                    if (name.isBlank() || description.isBlank() || location.isBlank() || priceVal == null || priceVal <= 0) {
                         errorMessage = "Completa todos los campos requeridos"
                         return@Button
                     }
@@ -282,15 +282,19 @@ fun ManageServiceScreen(
                                     price = priceVal,
                                     location = location
                                 )
-                                ApiClient.api.createService(token, create).isSuccessful
+                                val response = ApiClient.api.createService(token, create)
+                                if (!response.isSuccessful) {
+                                    errorMessage = "Error del servidor: ${response.code()} - ${response.errorBody()?.string()}"
+                                }
+                                response.isSuccessful
                             }
                             if (success) {
                                 onSaved()
                             } else {
-                                errorMessage = "Error al guardar el servicio"
+                                errorMessage = errorMessage ?: "Error al guardar el servicio"
                             }
                         } catch (e: Exception) {
-                            errorMessage = "Error de conexi\u00f3n: ${e.message}"
+                            errorMessage = "Error de conexión: ${e.message}"
                         } finally {
                             isSaving = false
                         }

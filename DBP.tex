@@ -1,0 +1,4608 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\AtBeginDocument{\shorthandoff{"}}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{tcolorbox}
+\usepackage{listings}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{hyperref}
+\usepackage{titlesec}
+
+\definecolor{azul}{RGB}{30,90,160}
+\definecolor{gris}{RGB}{90,90,90}
+\definecolor{fondocodigo}{RGB}{245,245,245}
+\definecolor{bordecaja}{RGB}{30,90,160}
+
+\setlength{\emergencystretch}{3em}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=azul,
+    urlcolor=azul,
+    pdftitle={TravelHub Backend - Guia de Estudio}
+}
+
+\titleformat{\section}
+    {\Large\bfseries\color{azul}}
+    {\thesection.}{0.5em}{}
+
+\titleformat{\subsection}
+    {\large\bfseries\color{azul!70!black}}
+    {\thesubsection}{0.5em}{}
+
+\lstset{
+    language=Python,
+    basicstyle=\ttfamily\small,
+    backgroundcolor=\color{fondocodigo},
+    frame=single,
+    rulecolor=\color{gris!40},
+    keywordstyle=\color{azul}\bfseries,
+    commentstyle=\color{gris}\itshape,
+    stringstyle=\color{red!60!black},
+    breaklines=true,
+    showstringspaces=false,
+    tabsize=4,
+    aboveskip=10pt,
+    belowskip=10pt,
+    extendedchars=true,
+    literate={á}{{\'a}}1 {é}{{\'e}}1 {í}{{\'i}}1 {ó}{{\'o}}1 {ú}{{\'u}}1
+        {Á}{{\'A}}1 {É}{{\'E}}1 {Í}{{\'I}}1 {Ó}{{\'O}}1 {Ú}{{\'U}}1
+        {ñ}{{\~n}}1 {Ñ}{{\~N}}1 {ü}{{\"u}}1 {Ü}{{\"U}}1 {¿}{{?`}}1 {¡}{{!`}}1
+}
+
+\newtcolorbox{recuadro}{
+    colback=blue!5,
+    colframe=bordecaja,
+    boxrule=0.8pt,
+    rounded corners,
+    title={\textbf{Resumen mental}}
+}
+
+\newtcolorbox{analogia}{
+    colback=orange!5,
+    colframe=orange!60!black,
+    boxrule=0.8pt,
+    rounded corners,
+    title={\textbf{Analogía}}
+}
+
+\title{\color{azul}\textbf{TravelHub --- Backend}\\[0.3em]
+\Large Guía de estudio: explicación del proyecto}
+\author{Documento de repaso}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+\vspace{1em}
+
+\begin{center}
+\colorbox{azul!10}{\parbox{0.9\textwidth}{\centering
+\textbf{Objetivo:} entender, como estudiante novato, el papel de cada archivo y carpeta
+del backend de TravelHub. Cada sección tiene explicación, analogía y código real del proyecto.
+}}
+\end{center}
+
+\tableofcontents
+\newpage
+
+% ============================================================
+\section{El contexto: estructura del backend}
+
+Dentro de la carpeta \texttt{TravelHub} existen dos grandes carpetas: \texttt{backend} y \texttt{frontend}.
+En el backend encontramos:
+
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+\textbf{Elemento} & \textbf{Rol general} \\
+\midrule
+\texttt{requirements.txt} & Lista de librerías del proyecto \\
+\texttt{venv} & Entorno virtual (librerías aisladas) \\
+\texttt{\_\_pycache\_\_} & Código compilado automático \\
+\texttt{app} & \textbf{El código real} del backend \\
+\texttt{Procfile} & Instrucción de arranque para el servidor \\
+\texttt{travelhub.db} & Base de datos SQLite (local) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Puntos clave:}
+\begin{itemize}
+    \item \texttt{venv} y \texttt{\_\_pycache\_\_} están ignorados por git (\texttt{.gitignore}).
+    \item No son código nuestro: \texttt{venv} se regenera, \texttt{\_\_pycache\_\_} se recrea solo.
+\end{itemize}
+
+% ============================================================
+\section{\texttt{requirements.txt} --- la lista de la compra}
+
+\subsection{¿Qué es?}
+
+Es el archivo que \textbf{declara todas las librerías} que necesita el backend para funcionar,
+con sus \textbf{versiones exactas}. Se instala todo de una vez con:
+
+\begin{lstlisting}
+pip install -r requirements.txt
+\end{lstlisting}
+
+\begin{analogia}
+Es como la \textbf{lista de la compra de un restaurante}: sin ella nadie sabría qué
+ingredientes hay que comprar antes de abrir.
+\end{analogia}
+
+\subsection{Contenido y papel de cada librería}
+
+\begin{center}
+\begin{longtable}{llp{9.2cm}}
+\toprule
+\textbf{Librería} & \textbf{Versión} & \textbf{Para qué sirve} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Librería} & \textbf{Versión} & \textbf{Para qué sirve} \\
+\midrule
+\endhead
+\texttt{fastapi} & 0.139.2 & El ``cerebro'' del backend: crea la API y sus rutas. \\
+\texttt{uvicorn} & 0.51.0 & El ``motor'' que arranca y ejecuta FastAPI. \\
+\texttt{sqlalchemy} & 2.0.51 & ORM: traduce Python a consultas de base de datos. \\
+\texttt{pydantic} & 2.13.4 & Valida que los datos que entran/salen tengan formato correcto. \\
+\texttt{pydantic\_core} & 2.46.4 & Motor interno de pydantic (no se usa directamente). \\
+\texttt{python-jose} & 3.5.0 & Crea y verifica tokens JWT (login). \\
+\texttt{passlib} + \texttt{bcrypt} & 1.7.4 / 5.0.0 & Encriptan las contraseñas de los usuarios. \\
+\texttt{python-multipart} & 0.0.32 & Permite recibir formularios y archivos. \\
+\texttt{email-validator} & 2.3.0 & Valida el formato de los correos. \\
+\texttt{psycopg2-binary} & 2.9.12 & Conexión con PostgreSQL (producción). \\
+\texttt{starlette} & 1.3.1 & Marco base sobre el que se construye FastAPI. \\
+\texttt{pyjwt} & 2.13.0 & Otra librería de JWT para firmar tokens. \\
+\texttt{cryptography} & 49.0.0 & Utilidades de cifrado de bajo nivel. \\
+\texttt{requests} & 2.32.3 & Cliente HTTP para llamar a otros servidores. \\
+\bottomrule
+\end{longtable}
+\end{center}
+
+\subsection{Cómo se conecta con el proyecto}
+
+\textbf{Cadena de dependencia:}
+
+\begin{center}
+\colorbox{fondocodigo}{\parbox{0.92\textwidth}{\ttfamily\small
+requirements.txt $\rightarrow$ venv (dónde se instala) $\rightarrow$ app (lo usa) $\rightarrow$ base de datos (SQLAlchemy)
+}}
+\end{center}
+
+\textbf{Dato importante:} las versiones exactas (\texttt{==}) no son casualidad.
+Por ejemplo, \texttt{passlib} es antigua y se lleva mal con \texttt{bcrypt} 4.x+.
+Cambiar una versión puede \textbf{romper el login}.
+
+% ============================================================
+\section{\texttt{venv} --- el entorno virtual}
+
+\subsection{¿Qué es?}
+
+\texttt{venv} = entorno \textbf{ven}v + \textbf{v}irtual. Es una \textbf{cocina privada}
+por proyecto: dentro se guardan las librerías instaladas, aisladas del resto del sistema.
+
+\subsection{¿Por qué existe?}
+
+Sin aislamiento, dos proyectos con versiones distintas de la misma librería se romperían
+entre sí. Con \texttt{venv}, cada proyecto tiene \textbf{su propio Python} y \textbf{sus propias librerías}.
+
+\begin{analogia}
+Cada proyecto es una casa y \texttt{venv} es su \textbf{cocina privada}, con sus propios
+ingredientes, sin compartir con las casas vecinas.
+\end{analogia}
+
+\subsection{Cómo se usa}
+
+El backend se arranca con el Python \emph{de dentro} de \texttt{venv}:
+
+\begin{lstlisting}
+venv\Scripts\python.exe -m uvicorn app.main:app
+\end{lstlisting}
+
+\subsection{Regla de oro}
+
+\begin{recuadro}
+\texttt{venv} \textbf{no se comparte ni se edita a mano}. Si se daña, se borra y se recrea:
+\begin{lstlisting}
+python -m venv venv
+pip install -r requirements.txt
+\end{lstlisting}
+\end{recuadro}
+
+% ============================================================
+\section{\texttt{\_\_pycache\_\_} --- basura automática}
+
+\subsection{¿Qué es?}
+
+Carpeta que genera Python al ejecutar código \texttt{.py}: guarda el \textbf{bytecode}
+(versión compilada) en archivos \texttt{.pyc} para no tener que volver a traducir el código cada vez.
+
+\begin{lstlisting}
+app\main.py  ->  app\__pycache__\main.cpython-xxx.pyc
+\end{lstlisting}
+
+\subsection{Datos rápidos}
+
+\begin{itemize}
+    \item \textbf{¿Lo escribo yo?} No, Python lo genera solo.
+    \item \textbf{¿Lo necesito?} No, es una optimización automática.
+    \item \textbf{¿Si lo borro?} No pasa nada: se regenera en la siguiente ejecución.
+    \item \textbf{¿Por qué \texttt{\_\_pycache\_\_}?} Los dobles guiones (\texttt{\_\_...\_\_}, ``dunder'')
+    son la convención de Python para nombres internos especiales.
+\end{itemize}
+
+\begin{recuadro}
+Es \textbf{basura inofensiva}: no la edites, no la necesites, no la extrañes.
+Está ignorada por git (\texttt{.gitignore}).
+\end{recuadro}
+
+% ============================================================
+\section{\texttt{app} --- el código real}
+
+Dentro de \texttt{app} encontramos las subcarpetas \texttt{db}, \texttt{models},
+\texttt{routes} y \texttt{schemas}, más archivos de configuración y utilidades.
+Empezamos por \texttt{main.py} porque es el \textbf{punto de entrada}.
+
+\begin{analogia}
+\texttt{main.py} es la \textbf{puerta principal de un edificio}: si la abres primero,
+entiendes en qué habitaciones se divide la casa y cómo se conectan.
+\end{analogia}
+
+\section{\texttt{main.py} --- el punto de entrada}
+
+\subsection{Los imports (líneas 1--6)}
+
+\begin{lstlisting}
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import text
+from app.db.database import engine, Base
+from app.models import User, Service, Booking, Itinerary, Message, Review
+from app.routes import auth, services, bookings, itineraries, messages, reviews, costs, ws, admin
+\end{lstlisting}
+
+\begin{itemize}
+    \item \texttt{FastAPI} y \texttt{CORSMiddleware}: el motor y el ``vigilante'' de peticiones externas.
+    \item \texttt{text}: permite ejecutar SQL en texto plano.
+    \item \texttt{engine} y \texttt{Base}: el ``cable'' de conexión a la base de datos y la
+    plantilla de la que derivan las tablas.
+    \item \texttt{models}: las tablas (usuarios, servicios, reservas, itinerarios, mensajes, reseñas).
+    \item \texttt{routes}: los ``menús'' de la API (login, servicios, reservas, etc.).
+\end{itemize}
+
+\begin{analogia}
+Los imports son como \textbf{invitar a los trabajadores del restaurante} antes de abrir.
+\end{analogia}
+
+\subsection{Crear y actualizar la base de datos (líneas 8--14)}
+
+\begin{lstlisting}
+Base.metadata.create_all(bind=engine)
+
+with engine.connect() as conn:
+    conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_code VARCHAR"))
+    conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_code_expires TIMESTAMP"))
+    conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS approved BOOLEAN DEFAULT FALSE"))
+    conn.commit()
+\end{lstlisting}
+
+\begin{itemize}
+    \item \texttt{create\_all}: crea todas las tablas \textbf{si no existen}. Por eso hay que
+    importar los modelos antes (los ``conoce'' todos).
+    \item \texttt{with engine.connect() as conn:}: abre la conexión, trabaja y la cierra sola.
+    \item \texttt{ALTER TABLE ... IF NOT EXISTS}: ``parche'' de migraciones: agrega columnas
+    nuevas a la tabla \texttt{users} si aún no las tiene (campos añadidos después).
+    \item \texttt{conn.commit()}: ``guarda'' los cambios.
+\end{itemize}
+
+\subsection{Crear la aplicación (línea 16)}
+
+\begin{lstlisting}
+app = FastAPI(title="TravelHub API")
+\end{lstlisting}
+
+Nace el objeto \texttt{app}, el ``cerebro'' que escucha las peticiones. El título es decorativo
+(aparece en la documentación automática).
+
+\subsection{El vigilante CORS (líneas 18--24)}
+
+\begin{lstlisting}
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+\end{lstlisting}
+
+\textbf{CORS} = \emph{Cross-Origin Resource Sharing}. Los navegadores bloquean peticiones entre
+dominios distintos por seguridad. Como el frontend (React) y el backend (FastAPI) viven en
+orígenes distintos, hay que \textbf{abrir la puerta}:
+
+\begin{itemize}
+    \item \texttt{allow\_origins=["*"]}: permite cualquier origen (abierto).
+    \item \texttt{allow\_methods=["*"]}: todos los métodos HTTP (GET, POST, PUT, DELETE\ldots).
+    \item \texttt{allow\_headers=["*"]}: todos los encabezados.
+\end{itemize}
+
+\subsection{Montar las rutas (líneas 26--34)}
+
+\begin{lstlisting}
+app.include_router(auth.router)
+app.include_router(services.router)
+app.include_router(bookings.router)
+app.include_router(itineraries.router)
+app.include_router(messages.router)
+app.include_router(reviews.router)
+app.include_router(costs.router)
+app.include_router(admin.router)
+app.mount("", ws.router)
+\end{lstlisting}
+
+Cada router aporta sus endpoints. La diferencia técnica: \texttt{include\_router} para rutas HTTP
+normales y \texttt{mount} para WebSockets (conexión en tiempo real, el chat).
+
+\begin{analogia}
+El restaurante abre y se le pegan los menús: ``a la carta'', ``especiales'', ``menú del día''.
+\end{analogia}
+
+\subsection{La ruta raíz (líneas 36--38)}
+
+\begin{lstlisting}
+@app.get("/")
+def root():
+    return {"message": "TravelHub API running"}
+\end{lstlisting}
+
+Es el ``timbre de bienvenida'': al visitar \texttt{http://localhost:8000/} confirma que el backend está vivo.
+
+\subsection{Resumen del flujo completo}
+
+Cuando el backend arranca, \texttt{main.py} hace, en orden:
+
+\begin{enumerate}
+    \item \textbf{Invita al personal} (imports).
+    \item \textbf{Prepara la base de datos} (crea tablas y aplica parches).
+    \item \textbf{Crea el cerebro} (\texttt{app}).
+    \item \textbf{Abre las puertas} (CORS).
+    \item \textbf{Pega los menús} (routers).
+    \item \textbf{Enciende el letrero} de bienvenida (raíz).
+\end{enumerate}
+
+Todo esto se ejecuta con:
+
+\begin{lstlisting}
+venv\Scripts\python.exe -m uvicorn app.main:app --reload
+\end{lstlisting}
+
+\begin{recuadro}
+``Toma \texttt{app} de \texttt{main.py} y ejecútalo.'' Así de simple es arrancar el backend.
+\end{recuadro}
+
+% ============================================================
+\section{\texttt{config.py} --- la central de configuraciones}
+
+\subsection{¿Qué es?}
+
+Es el archivo que reúne \textbf{las variables de configuración globales} del proyecto:
+la clave secreta, el algoritmo de los tokens, la base de datos y las claves de servicios externos.
+Todo el código lo lee de aquí para no tener valores escritos ``a mano'' en cada archivo.
+
+\subsection{Contenido completo (7 líneas)}
+
+\begin{lstlisting}
+import os
+
+SECRET_KEY = os.getenv("TRAVELHUB_SECRET_KEY", "mi_clave_secreta_super_segura")
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("TRAVELHUB_TOKEN_EXPIRE_MINUTES", "30"))
+DATABASE_URL = os.getenv("TRAVELHUB_DATABASE_URL", "sqlite:///./travelhub.db")
+GOOGLE_MAPS_API_KEY = os.getenv("GOOGLE_MAPS_API_KEY", "")
+\end{lstlisting}
+
+\subsection{Explicación concepto por concepto}
+
+\subsubsection{\texttt{import os}}
+
+Trae el módulo \texttt{os} de Python, que permite leer \textbf{variables de entorno}
+(datos que el sistema operativo le pasa al programa). Es la forma de ``meter configuraciones
+desde fuera, sin tocar el código''.
+
+\subsubsection{\texttt{os.getenv(nombre, valor\_por\_defecto)} --- la estrella del archivo}
+
+\begin{center}
+\colorbox{fondocodigo}{\parbox{0.92\textwidth}{\ttfamily\small
+os.getenv("NOMBRE", "valor por defecto")
+}}
+\end{center}
+
+Significa: ``\textbf{búscame} una variable de entorno llamada NOMBRE; \textbf{si existe}, úsala;
+\textbf{si no}, usa el valor por defecto''. Es como preguntar: ``¿dejaron una nota? Si sí, la leo;
+si no, uso mi plan B''.
+
+\begin{analogia}
+\texttt{os.getenv} es como \textbf{revisar si dejaron una nota en la nevera} antes de salir:
+si la nota existe (variable de entorno), obedeces la nota; si no, usas tu plan de siempre.
+\end{analogia}
+
+\subsubsection{Las variables, una por una}
+
+{\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{4.9cm}>{\raggedright\arraybackslash}p{5.5cm}>{\raggedright\arraybackslash}p{5cm}@{}}
+\toprule
+\textbf{Variable} & \textbf{Variable de entorno} & \textbf{Para qué sirve} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Variable} & \textbf{Variable de entorno} & \textbf{Para qué sirve} \\
+\midrule
+\endhead
+\texttt{SECRET\_KEY} & \texttt{TRAVELHUB\_SECRET\_KEY} & La ``firma'' secreta para crear y verificar tokens JWT. ¡Nunca debe filtrarse! \\
+\texttt{ALGORITHM} & --- (fijo) & Algoritmo de firma del JWT: \texttt{HS256} (firma simétrica con la clave secreta). \\
+\texttt{ACCESS\_TOKEN\_EXPIRE\_MINUTES} & \texttt{TRAVELHUB\_TOKEN\_EXPIRE\_MINUTES} & Minutos de validez de un token (por defecto 30). \texttt{int()} lo convierte en número entero. \\
+\texttt{DATABASE\_URL} & \texttt{TRAVELHUB\_DATABASE\_URL} & Dónde está la base de datos. Por defecto SQLite local: \texttt{sqlite:///./travelhub.db}. \\
+\texttt{GOOGLE\_MAPS\_API\_KEY} & \texttt{GOOGLE\_MAPS\_API\_KEY} & Clave de la API de Google Maps (mapas del proyecto). Vacía por defecto. \\
+\bottomrule
+\end{longtable}
+}
+
+\subsubsection{¿Por qué existe el ``valor por defecto''?}
+
+Para que el proyecto \textbf{funcione en tu PC sin configurar nada}. Si el ingeniero no creó
+la variable de entorno, el código igual corre con el valor que ya trae escrito. Eso es ideal
+para desarrollo local.
+
+\subsubsection{¿Y qué pasa en producción (el servidor)?}
+
+En el servidor (Render, por ejemplo) el ingeniero \textbf{sí define las variables de entorno}
+(la clave real, la base de datos PostgreSQL, la clave de Maps). Así, el mismo código se comporta
+distinto según el entorno: \textbf{el código no cambia, cambian los valores}.
+
+\begin{recuadro}
+\texttt{config.py} = \textbf{la central de configuraciones}. Un solo lugar para leer datos que
+varían entre tu PC (desarrollo) y el servidor (producción). La clave secreta nunca debe estar
+expuesta públicamente.
+\end{recuadro}
+
+% ============================================================
+\section{\texttt{db/database.py} --- la conexión con la base de datos}
+
+\subsection{¿Qué es?}
+
+Es el archivo que \textbf{se conecta con la base de datos} y le da a toda la app los ``tubos''
+por donde viajan los datos. En \texttt{main.py} ya lo vimos aparecer:
+\texttt{from app.db.database import engine, Base}. Aquí es donde nace todo eso.
+
+\subsection{Contenido completo (19 líneas)}
+
+\begin{lstlisting}
+from sqlalchemy import create_engine
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker, Session
+from app.config import DATABASE_URL
+
+connect_args = {}
+if "sqlite" in DATABASE_URL:
+    connect_args["check_same_thread"] = False
+
+engine = create_engine(DATABASE_URL, connect_args=connect_args)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+Base = declarative_base()
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+\end{lstlisting}
+
+\subsection{Explicación concepto por concepto}
+
+\subsubsection{Los imports (líneas 1--4)}
+
+\begin{itemize}
+    \item \texttt{create\_engine}: crea el ``tubo'' que conecta Python con la base de datos.
+    \item \texttt{declarative\_base}: genera la ``plantilla base'' de la que saldrán las tablas (los modelos).
+    \item \texttt{sessionmaker} y \texttt{Session}: herramientas para abrir ``sesiones'' de trabajo con la base.
+    \item \texttt{DATABASE\_URL}: viene de \texttt{config.py} (``dónde está la base de datos'').
+\end{itemize}
+
+\subsubsection{El detalle de SQLite (líneas 6--8)}
+
+\begin{lstlisting}
+connect_args = {}
+if "sqlite" in DATABASE_URL:
+    connect_args["check_same_thread"] = False
+\end{lstlisting}
+
+\textbf{SQLite} es la base de datos local (el archivo \texttt{travelhub.db}) y tiene una
+restricción: solo permite usarla desde \textbf{un solo hilo} (``carril'') a la vez. Como
+FastAPI puede atender varias peticiones a la vez (varios hilos), se le dice
+\texttt{check\_same\_thread = False}: ``\textbf{permite que varios carriles la usen}''.
+
+\begin{analogia}
+SQLite es una \textbf{cafetería de un solo mostrador}. Normalmente solo una persona puede pedir
+a la vez; con \texttt{check\_same\_thread = False} dejamos que \textbf{varios clientes pidan al mismo tiempo}
+(necesario porque la web atiende a muchos usuarios a la vez).
+\end{analogia}
+
+\textbf{Nota:} si la base es PostgreSQL (producción), esto no aplica, por eso el \texttt{if}.
+
+\subsubsection{\texttt{engine} (línea 10)}
+
+\begin{lstlisting}
+engine = create_engine(DATABASE_URL, connect_args=connect_args)
+\end{lstlisting}
+
+El \texttt{engine} es el ``tubo maestro'' de conexión. Es \textbf{único} en toda la app
+(se crea una sola vez) y todos los demás componentes lo comparten.
+
+\subsubsection{\texttt{SessionLocal} (línea 11)}
+
+\begin{lstlisting}
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+\end{lstlisting}
+
+Una ``fábrica de sesiones''. Cada vez que necesitamos trabajar con la base, pedimos una
+sesión nueva a \texttt{SessionLocal}.
+
+\begin{itemize}
+    \item \texttt{autocommit=False}: los cambios \textbf{no se guardan solos}; hay que decir
+    \texttt{db.commit()} explícitamente (como pulsar ``guardar'').
+    \item \texttt{autoflush=False}: los cambios \textbf{no se envían solos} a la base; tú decides cuándo.
+    \item \texttt{bind=engine}: ``conéctate al tubo que creamos''.
+\end{itemize}
+
+\subsubsection{\texttt{Base} (línea 12)}
+
+\begin{lstlisting}
+Base = declarative_base()
+\end{lstlisting}
+
+La ``plantilla madre'' de donde heredarán todos los modelos (las tablas). Cuando en
+\texttt{main.py} se ejecuta \texttt{Base.metadata.create\_all(bind=engine)}, Python mira
+\textbf{todos los modelos que heredan de \texttt{Base}} y crea sus tablas.
+
+\subsubsection{\texttt{get\_db()} (líneas 14--19) --- la ``fábrica con limpieza''}
+
+\begin{lstlisting}
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+\end{lstlisting}
+
+Es una \textbf{función generadora} (usa \texttt{yield} en vez de \texttt{return}):
+- Abre una sesión.
+- \textbf{La presta} a la función que la pida (\texttt{yield db}).
+- Cuando esa función termina (pase lo que pase), \textbf{cierra la sesión} (\texttt{db.close()}).
+
+¿Por qué importa? En casi todos los endpoints verás:
+
+\begin{lstlisting}
+def mi_endpoint(db: Session = Depends(get_db)):
+    ...
+\end{lstlisting}
+
+FastAPI llama a \texttt{get\_db}, recibe la sesión ``prestada'', la usa, y al terminar la cierra
+sola. \textbf{Es imposible olvidarse de cerrar la conexión} (evita fugas de memoria).
+
+\begin{recuadro}
+\texttt{engine} = el tubo maestro. \texttt{SessionLocal} = la fábrica de sesiones.
+\texttt{Base} = la plantilla de las tablas. \texttt{get\_db} = presta una sesión y la cierra sola.
+\end{recuadro}
+
+% ============================================================
+\section{\texttt{db/\_\_init\_\_.py} --- el ``carnet'' de carpeta}
+
+\subsection{¿Qué es?}
+
+El archivo está \textbf{vacío} (0 líneas), pero eso no significa que no sirva.
+
+\subsection{Para qué existe}
+
+En Python, una carpeta con un archivo \texttt{\_\_init\_\_.py} se convierte en un
+\textbf{``paquete''} (package): un módulo que puede ser importado.
+
+Gracias a él, el código puede escribir:
+
+\begin{lstlisting}
+from app.db.database import engine, Base
+\end{lstlisting}
+
+Sin él, Python \textbf{no sabría} que \texttt{db} es una carpeta de código importable.
+
+\subsubsection{¿Y si está vacío? ¿Funciona?}
+
+Sí. Que esté vacío solo significa que ``no tiene comportamiento propio''; sirve únicamente
+como \textbf{marcador de paquete}. (También puede contener código, pero aquí no hace falta.)
+
+\begin{analogia}
+\texttt{\_\_init\_\_.py} es el \textbf{carnet de identidad de la carpeta}: le dice a Python
+``soy un paquete, puedes importarme''. Vacío o no, el carnet hace su trabajo.
+\end{analogia}
+
+\begin{recuadro}
+\texttt{\_\_init\_\_.py} convierte una carpeta en un \textbf{paquete importable}.
+Puede estar vacío; su sola presencia ya cumple su función.
+\end{recuadro}
+
+% ============================================================
+\section{\texttt{models/} --- las tablas de la base de datos}
+
+\subsection{¿Qué es \texttt{models/}?}
+
+Carpeta que contiene \textbf{los modelos} (las ``recetas'' de las tablas de la base de datos).
+Cada archivo define una clase que \textbf{hereda de \texttt{Base}} (la plantilla de
+\texttt{database.py}) y eso la convierte en una tabla real.
+
+\begin{analogia}
+Los modelos son \textbf{moldes para galletas}: defines una vez la forma (la clase) y
+la base de datos hornea todas las galletas (filas) que quieras con ese mismo molde.
+\end{analogia}
+
+Los archivos de la carpeta:
+\begin{itemize}
+    \item \texttt{user.py} --- usuarios (turistas, prestadores, admin).
+    \item \texttt{service.py} --- servicios turísticos (el ``producto'' que venden los prestadores).
+    \item \texttt{booking.py} --- reservas (un turista reserva un servicio).
+    \item \texttt{itinerary.py} --- itinerarios (el plan de viaje).
+    \item \texttt{message.py} --- mensajes del chat entre turista y prestador.
+    \item \texttt{review.py} --- reseñas que dejan los turistas.
+    \item \texttt{\_\_init\_\_.py} --- importa todos los modelos (lo veremos al final).
+\end{itemize}
+
+Empezamos por \texttt{user.py} porque es la base de todo: las demás tablas apuntan a usuarios.
+
+% ============================================================
+\section{\texttt{models/user.py} --- el modelo Usuario}
+
+\subsection{Contenido completo (17 líneas)}
+
+\begin{lstlisting}
+from sqlalchemy import Column, Integer, String, Boolean, DateTime
+from sqlalchemy.sql import func
+from app.db.database import Base
+
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+    email = Column(String, unique=True, index=True, nullable=False)
+    password_hash = Column(String, nullable=False)
+    role = Column(String, nullable=False)  # turista, prestador, admin
+    verified = Column(Boolean, default=False)
+    approved = Column(Boolean, default=False)
+    verification_code = Column(String, nullable=True)
+    verification_code_expires = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+\end{lstlisting}
+
+\subsection{Explicación concepto por concepto}
+
+\subsubsection{Los imports (líneas 1--3)}
+
+\begin{itemize}
+    \item \texttt{Column, Integer, String, Boolean, DateTime}: los ``tipos de dato'' para
+    definir columnas (número, texto, verdadero/falso, fecha).
+    \item \texttt{func}: utilidades de SQL (p. ej. \texttt{func.now()} = ``la hora actual del servidor'').
+    \item \texttt{Base}: la plantilla de \texttt{database.py} que convierte la clase en tabla.
+\end{itemize}
+
+\subsubsection{La clase y su nombre de tabla (líneas 5--6)}
+
+\begin{lstlisting}
+class User(Base):
+    __tablename__ = "users"
+\end{lstlisting}
+
+\begin{itemize}
+    \item \texttt{class User(Base):} --- ``crea una clase llamada User que hereda de Base''.
+    Heredar = ``recibe todas las habilidades de Base'' (en este caso, saber ser una tabla).
+    \item \texttt{\_\_tablename\_\_ = "users"} --- le da \textbf{nombre a la tabla en la base de datos}.
+    Ojo: la clase se llama \texttt{User}, pero la tabla se llama \texttt{users} (en plural).
+\end{itemize}
+
+\subsubsection{Las columnas (líneas 8--17)}
+
+Cada línea es una \textbf{columna de la tabla}. Se lee así:
+``\texttt{nombre} = \texttt{Column(tipo, opciones)}''.
+
+\begin{center}
+{\small
+\setlength{\tabcolsep}{4pt}
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{4.2cm}>{\raggedright\arraybackslash}p{3cm}>{\raggedright\arraybackslash}p{7.7cm}@{}}
+\toprule
+\textbf{Columna} & \textbf{Tipo} & \textbf{Qué guarda / detalles} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Columna} & \textbf{Tipo} & \textbf{Qué guarda / detalles} \\
+\midrule
+\endhead
+\texttt{id} & \texttt{Integer} & Número único por usuario (la ``cédula''). \texttt{primary\_key} = identificador oficial; \texttt{index} = se busca rápido. \\
+\texttt{name} & \texttt{String} & Nombre del usuario. \texttt{nullable=False} = obligatorio (no puede quedar vacío). \\
+\texttt{email} & \texttt{String} & Correo. \texttt{unique} = no se repite (dos usuarios no pueden tener el mismo). \\
+\texttt{password\_hash} & \texttt{String} & La contraseña \textbf{encriptada} (hash). Nunca se guarda la contraseña en texto plano. \\
+\texttt{role} & \texttt{String} & El tipo de usuario: \texttt{turista}, \texttt{prestador} o \texttt{admin} (ver la nota de la línea 12). \\
+\texttt{verified} & \texttt{Boolean} & ¿Verificó su correo? (sí/no, por defecto \texttt{False}). \\
+\texttt{approved} & \texttt{Boolean} & ¿Fue aprobado? (los prestadores necesitan aprobación del admin). \\
+\texttt{verification\_code} & \texttt{String} & El código que se envía por correo para verificar. \texttt{nullable=True} = puede estar vacío. \\
+\texttt{verification\_code\_\allowbreak expires} & \texttt{DateTime} & Cuándo vence el código de verificación. \texttt{timezone=True} = guarda la zona horaria. \\
+\texttt{created\_at} & \texttt{DateTime} & Fecha/hora en que se creó el usuario. \texttt{server\_default=func.now()} = lo pone la base de datos sola. \\
+\bottomrule
+\end{longtable}
+}
+\end{center}
+
+\subsubsection{Los 3 niveles de ``restricción'' (clave para novatos)}
+
+Las opciones de cada columna son \textbf{reglas de la base de datos}:
+
+\begin{itemize}
+    \item \texttt{nullable=False}: ``\textbf{esta casilla es obligatoria}, no aceptes un registro sin ella''.
+    \item \texttt{unique=True}: ``\textbf{este valor no puede repetirse} en toda la tabla''.
+    \item \texttt{primary\_key=True}: ``esta columna es \textbf{la cédula oficial} del registro, única y usada para referenciarla''.
+\end{itemize}
+
+\subsubsection{La diferencia \texttt{default} vs \texttt{server\_default}}
+
+\begin{itemize}
+    \item \texttt{default=False} (en \texttt{verified}): el valor lo pone \textbf{Python} al crear el registro.
+    \item \texttt{server\_default=func.now()} (en \texttt{created\_at}): el valor lo pone \textbf{la base de datos} (``hora de este servidor, ahora mismo'').
+\end{itemize}
+
+\subsubsection{¿De dónde salen esas columnas extra de \texttt{main.py}?}
+
+Recuerda el \texttt{ALTER TABLE} \ldots{} \texttt{ADD COLUMN} de \texttt{main.py}: añadía
+\texttt{verification\_code}, \texttt{verification\_code\_}\allowbreak\texttt{expires} y \texttt{approved}.
+¡Exacto! Son estas mismas columnas, añadidas después de que la tabla ya existía. Ahora se ve la conexión.
+
+\begin{recuadro}
+Un modelo = una tabla. Una columna = un campo con tipo y reglas.
+\texttt{User} es la tabla \texttt{users}, con 10 columnas que describen a cada usuario.
+\end{recuadro}
+
+% ============================================================
+\section{\texttt{models/service.py} --- el modelo Servicio}
+
+\subsection{Contenido completo (17 líneas)}
+
+\begin{lstlisting}
+from sqlalchemy import Column, Integer, String, Float, Boolean, DateTime, ForeignKey
+from sqlalchemy.sql import func
+from app.db.database import Base
+
+class Service(Base):
+    __tablename__ = "services"
+
+    id = Column(Integer, primary_key=True, index=True)
+    provider_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    type = Column(String, nullable=False)  # guia, hotel
+    name = Column(String, nullable=False)
+    description = Column(String)
+    price = Column(Float, nullable=False)
+    location = Column(String)
+    rating = Column(Float, default=0.0)
+    available = Column(Boolean, default=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+\end{lstlisting}
+
+\subsection{¿Qué es un \texttt{Service}?}
+
+Es el ``producto'' que venden los prestadores de servicios: una \textbf{guía turística},
+un \textbf{hotel}, etc. Un servicio \textbf{pertenece a un usuario} (el prestador que lo ofrece).
+
+\begin{analogia}
+Si \texttt{users} es la lista de vendedores, \texttt{services} es la \textbf{tienda}:
+cada tienda tiene dueño, nombre, precio y puede estar abierta o cerrada.
+\end{analogia}
+
+\subsection{Lo nuevo: la columna con \texttt{ForeignKey} (línea 9)}
+
+\begin{lstlisting}
+provider_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+\end{lstlisting}
+
+Esta es \textbf{la gran novedad} frente a \texttt{User}:
+
+\begin{itemize}
+    \item \texttt{provider\_id}: ``el id del prestador (dueño) de este servicio''.
+    \item \texttt{ForeignKey("users.id")}: \textbf{clave foránea} --- ``este número debe existir
+    en la columna \texttt{id} de la tabla \texttt{users}''.
+\end{itemize}
+
+\textbf{¿Por qué importa?} Garantiza la \textbf{integridad}: no puedes crear un servicio cuyo dueño
+no exista. Y permite \textbf{relacionar tablas}: dado un servicio, sabes a qué usuario pertenece.
+
+\begin{analogia}
+\texttt{ForeignKey} es como escribir en un formulario ``\textbf{folio del cliente}'':
+ese folio debe existir en el registro de clientes. No puedes inventarte un folio que no existe.
+\end{analogia}
+
+\subsection{Las columnas, una por una}
+
+\begin{center}
+{\small
+\setlength{\tabcolsep}{4pt}
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{3.4cm}>{\raggedright\arraybackslash}p{3cm}>{\raggedright\arraybackslash}p{8.5cm}@{}}
+\toprule
+\textbf{Columna} & \textbf{Tipo} & \textbf{Qué guarda / detalles} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Columna} & \textbf{Tipo} & \textbf{Qué guarda / detalles} \\
+\midrule
+\endhead
+\texttt{id} & \texttt{Integer} & Identificador único del servicio. \\
+\texttt{provider\_id} & \texttt{Integer} & El id del prestador dueño. \texttt{ForeignKey} hacia \texttt{users.id} (obligatorio). \\
+\texttt{type} & \texttt{String} & Tipo de servicio: \texttt{guia} o \texttt{hotel} (ver nota línea 10). \\
+\texttt{name} & \texttt{String} & Nombre del servicio (obligatorio). \\
+\texttt{description} & \texttt{String} & Descripción. Sin \texttt{nullable=False}: \textbf{puede ser vacío}. \\
+\texttt{price} & \texttt{Float} & Precio (número con decimales). Nuevo tipo: \texttt{Float}. \\
+\texttt{location} & \texttt{String} & Ubicación. Puede ser vacío. \\
+\texttt{rating} & \texttt{Float} & Calificación promedio (empieza en 0.0). \\
+\texttt{available} & \texttt{Boolean} & ¿Está disponible? (por defecto \texttt{True}). \\
+\texttt{created\_at} & \texttt{DateTime} & Fecha de creación (la pone la base de datos sola). \\
+\bottomrule
+\end{longtable}
+}
+\end{center}
+
+\subsubsection{El nuevo tipo \texttt{Float}}
+
+\texttt{Integer} guarda números \textbf{enteros} (1, 50, 300). \texttt{Float} guarda números
+\textbf{con decimales} (49.99, 4.5). Ideal para precios y calificaciones.
+
+\subsubsection{El patrón de las columnas \textbf{sin} \texttt{nullable=False}}
+
+Observa: \texttt{description} y \texttt{location} \textbf{no} dicen \texttt{nullable=False}.
+Eso significa que son \textbf{opcionales}: pueden quedar vacías (NULL). En \texttt{User},
+todas las columnas importantes eran obligatorias; aquí el servicio puede no tener descripción.
+
+\begin{recuadro}
+\texttt{ForeignKey} = \textbf{apuntar a otra tabla}. Un servicio apunta a su dueño
+(\texttt{provider\_id} $\rightarrow$ \texttt{users.id}). Así las tablas se conectan entre sí.
+\end{recuadro}
+
+% ============================================================
+\section{\texttt{models/booking.py} --- el modelo Reserva}
+
+\subsection{Contenido completo (14 líneas)}
+
+\begin{lstlisting}
+from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey
+from sqlalchemy.sql import func
+from app.db.database import Base
+
+class Booking(Base):
+    __tablename__ = "bookings"
+
+    id = Column(Integer, primary_key=True, index=True)
+    tourist_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    service_id = Column(Integer, ForeignKey("services.id"), nullable=False)
+    date = Column(DateTime, nullable=False)
+    status = Column(String, default="pendiente")  # pendiente, confirmada, cancelada
+    total = Column(Float, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+\end{lstlisting}
+
+\subsection{¿Qué es una \texttt{Booking}?}
+
+Es el ``contrato'' que une a \textbf{un turista} con \textbf{un servicio} en una fecha concreta.
+Es la tabla que \textbf{conecta a dos tablas a la vez}.
+
+\begin{analogia}
+Es como el \textbf{ticket de compra} de una tienda: dice quién compró (\texttt{tourist\_id}),
+qué compró (\texttt{service\_id}), cuándo (\texttt{date}), cuánto pagó (\texttt{total})
+y en qué estado está la compra (\texttt{status}).
+\end{analogia}
+
+\subsection{Lo destacado: DOS claves foráneas (líneas 9--10)}
+
+\begin{lstlisting}
+tourist_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+service_id = Column(Integer, ForeignKey("services.id"), nullable=False)
+\end{lstlisting}
+
+\texttt{Booking} tiene \textbf{dos apuntadores}:
+\begin{itemize}
+    \item \texttt{tourist\_id} $\rightarrow$ \texttt{users.id}: ``\textbf{quién} reserva'' (el turista).
+    \item \texttt{service\_id} $\rightarrow$ \texttt{services.id}: ``\textbf{qué} reserva'' (el servicio).
+\end{itemize}
+
+Esto es lo bonito de las bases relacionales: \textbf{una reserva une a un usuario con un servicio}
+sin copiar sus datos (no guarda el nombre del turista ni el precio del servicio; solo apunta a ellos).
+
+\begin{recuadro}
+Una reserva \textbf{no duplica información}: guarda los \texttt{id} que apuntan al usuario y al
+servicio. Si cambia el precio del servicio, todas las reservas ``lo ven'' actualizado.
+\end{recuadro}
+
+\subsection{Las columnas, una por una}
+
+\begin{center}
+{\small
+\setlength{\tabcolsep}{4pt}
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{3.4cm}>{\raggedright\arraybackslash}p{3cm}>{\raggedright\arraybackslash}p{8.5cm}@{}}
+\toprule
+\textbf{Columna} & \textbf{Tipo} & \textbf{Qué guarda / detalles} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Columna} & \textbf{Tipo} & \textbf{Qué guarda / detalles} \\
+\midrule
+\endhead
+\texttt{id} & \texttt{Integer} & Identificador único de la reserva. \\
+\texttt{tourist\_id} & \texttt{Integer} & Id del turista que reserva. \texttt{ForeignKey} $\rightarrow$ \texttt{users.id} (obligatorio). \\
+\texttt{service\_id} & \texttt{Integer} & Id del servicio reservado. \texttt{ForeignKey} $\rightarrow$ \texttt{services.id} (obligatorio). \\
+\texttt{date} & \texttt{DateTime} & Fecha/hora de la reserva. Obligatorio. \\
+\texttt{status} & \texttt{String} & Estado: \texttt{pendiente}, \texttt{confirmada} o \texttt{cancelada} (por defecto \texttt{pendiente}). \\
+\texttt{total} & \texttt{Float} & Precio total de la reserva (con decimales). Obligatorio. \\
+\texttt{created\_at} & \texttt{DateTime} & Cuándo se creó la reserva (lo pone la base de datos). \\
+\bottomrule
+\end{longtable}
+}
+\end{center}
+
+\subsection{El estado como texto (\texttt{status}) --- una decisión de diseño}
+
+\texttt{status} guarda el estado como \textbf{texto} (\texttt{"pendiente"}). Podría ser un número
+(0, 1, 2), pero el texto es \textbf{más legible} y fácil de depurar. El ``significado'' de los
+estados está anotado en el comentario de la línea 12. El frontend usa esos textos para
+mostrar botones (``confirmar'', ``cancelar'') según el estado.
+
+\begin{recuadro}
+\texttt{Booking} = la \textbf{unificadora}: une turista + servicio + fecha + precio + estado.
+Con dos claves foráneas ya tenemos un minisistema de tres tablas conectadas.
+\end{recuadro}
+
+% ============================================================
+\section{\texttt{models/itinerary.py} --- el modelo Itinerario}
+
+\subsection{Contenido completo (12 líneas)}
+
+\begin{lstlisting}
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, JSON
+from sqlalchemy.sql import func
+from app.db.database import Base
+
+class Itinerary(Base):
+    __tablename__ = "itineraries"
+
+    id = Column(Integer, primary_key=True, index=True)
+    tourist_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    day = Column(Integer, nullable=False)
+    route_data = Column(JSON)  # Guarda puntos del mapa
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+\end{lstlisting}
+
+\subsection{¿Qué es una \texttt{Itinerary}?}
+
+Es el \textbf{plan de viaje} de un turista: ``qué hago el día X''. Por eso su tabla es simple:
+apunta al turista (\texttt{tourist\_id}), dice el número de día (\texttt{day}) y guarda
+la ruta en un \texttt{route\_data}.
+
+\begin{analogia}
+Es como la \textbf{página de una agenda de viaje}: ``Día 1: visita estos puntos del mapa''.
+Cada itinerario es una página, y el turista puede tener muchas páginas (días).
+\end{analogia}
+
+\subsection{Lo nuevo: el tipo \texttt{JSON} (línea 11)}
+
+\begin{lstlisting}
+route_data = Column(JSON)  # Guarda puntos del mapa
+\end{lstlisting}
+
+Hasta ahora los tipos eran rígidos (texto, número, fecha). \texttt{JSON} es \textbf{flexible}:
+guarda una estructura completa (objetos, listas, coordenadas) tal cual.
+
+En este proyecto guarda \textbf{puntos del mapa} (latitud, longitud, nombre de lugares),
+que vienen del trabajo con \texttt{maps\_utils.py} (la API de Google Maps).
+
+\subsubsection{JSON en una frase}
+
+\begin{center}
+\colorbox{fondocodigo}{\parbox{0.92\textwidth}{\ttfamily\small
+\symbol{34}puntos\symbol{34}: [\symbol{34}lat\symbol{34}: -12.0464, \symbol{34}lng\symbol{34}: -77.0428, \symbol{34}lugar\symbol{34}: \symbol{34}Centro\symbol{34}]
+}}
+\end{center}
+
+\begin{itemize}
+    \item \texttt{JSON} = \emph{JavaScript Object Notation}: formato de texto para guardar
+    datos estructurados (parece un diccionario de Python).
+    \item Ventaja: guardas \textbf{toda la ruta de un día en una sola casilla}, sin necesidad
+    de crear otra tabla con los puntos.
+    \item La contrapartida: es difícil ``buscar dentro'' del JSON con SQL (no es ideal para
+    datos que se consultan a menudo). Aquí es perfecto porque solo se lee y se muestra.
+\end{itemize}
+
+\subsection{Las columnas, una por una}
+
+\begin{center}
+{\small
+\setlength{\tabcolsep}{4pt}
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{3.4cm}>{\raggedright\arraybackslash}p{3cm}>{\raggedright\arraybackslash}p{8.5cm}@{}}
+\toprule
+\textbf{Columna} & \textbf{Tipo} & \textbf{Qué guarda / detalles} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Columna} & \textbf{Tipo} & \textbf{Qué guarda / detalles} \\
+\midrule
+\endhead
+\texttt{id} & \texttt{Integer} & Identificador único del itinerario. \\
+\texttt{tourist\_id} & \texttt{Integer} & Id del turista dueño del plan. \texttt{ForeignKey} $\rightarrow$ \texttt{users.id} (obligatorio). \\
+\texttt{day} & \texttt{Integer} & El número del día del viaje (1, 2, 3\ldots). Obligatorio. \\
+\texttt{route\_data} & \texttt{JSON} & La ruta del día (puntos del mapa). Puede estar vacía. \\
+\texttt{created\_at} & \texttt{DateTime} & Cuándo se creó el itinerario (lo pone la base de datos). \\
+\bottomrule
+\end{longtable}
+}
+\end{center}
+
+\subsection{El patrón que se repite}
+
+Observa que \texttt{itinerary} sigue el mismo molde: \texttt{id}, algo que apunta al usuario
+con \texttt{ForeignKey}, datos propios, y \texttt{created\_at}. En un proyecto, la mayoría de
+tablas siguen este patrón.
+
+\begin{recuadro}
+\texttt{JSON} = guardar \textbf{datos flexibles y estructurados} (como la ruta del mapa)
+en una sola columna. Simple y poderoso para este caso.
+\end{recuadro}
+
+% ============================================================
+\section{\texttt{models/message.py} --- el modelo Mensaje}
+
+\subsection{Contenido completo (14 líneas)}
+
+\begin{lstlisting}
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Boolean
+from sqlalchemy.sql import func
+from app.db.database import Base
+
+class Message(Base):
+    __tablename__ = "messages"
+
+    id = Column(Integer, primary_key=True, index=True)
+    sender_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    receiver_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    booking_id = Column(Integer, ForeignKey("bookings.id"), nullable=False)
+    content = Column(String, nullable=False)
+    read = Column(Boolean, default=False)
+    timestamp = Column(DateTime(timezone=True), server_default=func.now())
+\end{lstlisting}
+
+\subsection{¿Qué es una \texttt{Message}?}
+
+Es un \textbf{mensaje del chat} entre un turista y un prestador dentro de una reserva.
+Recuerda el archivo \texttt{ws.py}: cada vez que alguien escribe en el chat, aquí se guarda
+el mensaje en la base de datos.
+
+\subsection{Lo destacado: \textbf{tres} claves foráneas (líneas 9--11)}
+
+\begin{lstlisting}
+sender_id   = Column(Integer, ForeignKey("users.id"),    nullable=False)
+receiver_id = Column(Integer, ForeignKey("users.id"),    nullable=False)
+booking_id  = Column(Integer, ForeignKey("bookings.id"), nullable=False)
+\end{lstlisting}
+
+Un mensaje necesita saber \textbf{tres cosas}:
+\begin{itemize}
+    \item \texttt{sender\_id} $\rightarrow$ \texttt{users.id}: \textbf{quién} lo envía.
+    \item \texttt{receiver\_id} $\rightarrow$ \texttt{users.id}: \textbf{a quién} va dirigido.
+    \item \texttt{booking\_id} $\rightarrow$ \texttt{bookings.id}: \textbf{de qué reserva} se habla.
+\end{itemize}
+
+\subsubsection{¡Detalle curioso! Dos foráneas a la \textbf{misma} tabla}
+
+Fíjate: \texttt{sender\_id} y \texttt{receiver\_id} apuntan \textbf{las dos} a \texttt{users.id}.
+Eso es correcto y muy común: la tabla \texttt{users} puede ser referenciada \textbf{muchas veces}
+por la misma tabla, siempre que los nombres de las columnas sean distintos. No hay conflicto.
+
+\begin{analogia}
+Es como un \textbf{correo postal}: \texttt{sender\_id} es el remitente y \texttt{receiver\_id} el
+destinatario. Ambos son personas (de la misma tabla ``personas''), pero con roles distintos.
+\end{analogia}
+
+\subsection{Las columnas, una por una}
+
+\begin{center}
+{\small
+\setlength{\tabcolsep}{4pt}
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{3.4cm}>{\raggedright\arraybackslash}p{3cm}>{\raggedright\arraybackslash}p{8.5cm}@{}}
+\toprule
+\textbf{Columna} & \textbf{Tipo} & \textbf{Qué guarda / detalles} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Columna} & \textbf{Tipo} & \textbf{Qué guarda / detalles} \\
+\midrule
+\endhead
+\texttt{id} & \texttt{Integer} & Identificador único del mensaje. \\
+\texttt{sender\_id} & \texttt{Integer} & Quién lo envía. \texttt{ForeignKey} $\rightarrow$ \texttt{users.id} (obligatorio). \\
+\texttt{receiver\_id} & \texttt{Integer} & A quién va dirigido. \texttt{ForeignKey} $\rightarrow$ \texttt{users.id} (obligatorio). \\
+\texttt{booking\_id} & \texttt{Integer} & Reserva de la que se habla. \texttt{ForeignKey} $\rightarrow$ \texttt{bookings.id} (obligatorio). \\
+\texttt{content} & \texttt{String} & El texto del mensaje (obligatorio). \\
+\texttt{read} & \texttt{Boolean} & ¿Ya lo leyó el destinatario? (por defecto \texttt{False}). \\
+\texttt{timestamp} & \texttt{DateTime} & Cuándo se envió (lo pone la base de datos). \\
+\bottomrule
+\end{longtable}
+}
+\end{center}
+
+\subsection{Cómo se conecta con \texttt{ws.py}}
+
+En \texttt{ws.py} vimos que al recibir \texttt{send\_message}, el código crea:
+\begin{lstlisting}
+new_message = Message(
+    sender_id=user_id,
+    receiver_id=receiver_id,
+    booking_id=booking_id,
+    content=content
+)
+db.add(new_message)
+db.commit()
+\end{lstlisting}
+
+Ahora ves el modelo detrás de ese código: los datos llegan por el chat (WebSocket) y se
+\textbf{guardan en esta tabla}. Además, \texttt{mark\_read} marca \texttt{read = True}.
+Todo cuadra: los nombres de las columnas son los mismos que se usan en \texttt{ws.py}.
+
+\begin{recuadro}
+\texttt{Message} = el chat \textbf{guardado}. Tres foráneas lo ubican (quién, a quién, de qué
+reserva) y \texttt{read} controla el ``visto''.
+\end{recuadro}
+
+% ============================================================
+\section{\texttt{models/review.py} --- el modelo Reseña}
+
+\subsection{Contenido completo (14 líneas)}
+
+\begin{lstlisting}
+from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey
+from sqlalchemy.sql import func
+from app.db.database import Base
+
+class Review(Base):
+    __tablename__ = "reviews"
+
+    id = Column(Integer, primary_key=True, index=True)
+    booking_id = Column(Integer, ForeignKey("bookings.id"), nullable=False)
+    tourist_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    service_id = Column(Integer, ForeignKey("services.id"), nullable=False)
+    rating = Column(Integer, nullable=False)  # 1-5
+    comment = Column(String)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+\end{lstlisting}
+
+\subsection{¿Qué es una \texttt{Review}?}
+
+Es la \textbf{valoración} que deja un turista sobre un servicio que contrató. Tiene la
+calificación (\texttt{rating}), un comentario opcional, y \textbf{apunta a tres tablas}:
+la reserva, el turista y el servicio.
+
+\subsection{Lo destacado: \textbf{tres} claves foráneas (líneas 9--11)}
+
+\begin{lstlisting}
+booking_id  = Column(Integer, ForeignKey("bookings.id"),  nullable=False)
+tourist_id  = Column(Integer, ForeignKey("users.id"),     nullable=False)
+service_id  = Column(Integer, ForeignKey("services.id"),  nullable=False)
+\end{lstlisting}
+
+\textbf{¿Por qué tres?} Para contestar tres preguntas de una reseña:
+\begin{itemize}
+    \item \texttt{booking\_id}: ¿\textbf{a qué reserva} corresponde la reseña? (evita reseñas falsas sin haber contratado).
+    \item \texttt{tourist\_id}: \textbf{quién} la escribió.
+    \item \texttt{service\_id}: \textbf{a qué servicio} se refiere.
+\end{itemize}
+
+\subsubsection{La relación con \texttt{service.rating}}
+
+Recuerda que en \texttt{service.py} había una columna \texttt{rating} (Float, empieza en 0.0).
+Esa es la \textbf{calificación promedio} del servicio. Aquí en \texttt{reviews} se guardan
+\textbf{cada una de las notas individuales}. El promedio se calcula a partir de todas las
+reseñas: cada nueva reseña ``alimenta'' el promedio del servicio. Una tabla sirve para calcular
+datos de otra.
+
+\begin{analogia}
+La reseña individual es la \textbf{nota de un examen}; el \texttt{rating} del servicio es el
+\textbf{promedio del curso}, que se recalcula con cada examen nuevo.
+\end{analogia}
+
+\subsection{Las columnas, una por una}
+
+\begin{center}
+{\small
+\setlength{\tabcolsep}{4pt}
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{3.4cm}>{\raggedright\arraybackslash}p{3cm}>{\raggedright\arraybackslash}p{8.5cm}@{}}
+\toprule
+\textbf{Columna} & \textbf{Tipo} & \textbf{Qué guarda / detalles} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Columna} & \textbf{Tipo} & \textbf{Qué guarda / detalles} \\
+\midrule
+\endhead
+\texttt{id} & \texttt{Integer} & Identificador único de la reseña. \\
+\texttt{booking\_id} & \texttt{Integer} & Reserva que se reseña. \texttt{ForeignKey} $\rightarrow$ \texttt{bookings.id} (obligatorio). \\
+\texttt{tourist\_id} & \texttt{Integer} & Turista que la escribió. \texttt{ForeignKey} $\rightarrow$ \texttt{users.id} (obligatorio). \\
+\texttt{service\_id} & \texttt{Integer} & Servicio reseñado. \texttt{ForeignKey} $\rightarrow$ \texttt{services.id} (obligatorio). \\
+\texttt{rating} & \texttt{Integer} & Calificación de 1 a 5 (ver nota línea 12). \\
+\texttt{comment} & \texttt{String} & Comentario en texto. Opcional (sin \texttt{nullable=False}). \\
+\texttt{created\_at} & \texttt{DateTime} & Cuándo se escribió (lo pone la base de datos). \\
+\bottomrule
+\end{longtable}
+}
+\end{center}
+
+\subsubsection{Detalle: \texttt{rating} es \texttt{Integer} aquí}
+
+En \texttt{service.py}, \texttt{rating} era \texttt{Float} (4.5, 3.8 = el promedio). Aquí, en la
+reseña individual, \texttt{rating} es \texttt{Integer} porque cada turista da una nota \textbf{entera}
+de 1 a 5. Mismo nombre, tipo distinto: \textbf{el promedio es decimal, cada nota es entera}.
+
+\begin{recuadro}
+\texttt{Review} = la \textbf{nota} de un servicio. Tres foráneas la ubican (reserva + turista +
+servicio), y alimenta el promedio \texttt{rating} de \texttt{services}.
+\end{recuadro}
+
+% ============================================================
+\section{\texttt{models/\_\_init\_\_.py} --- el pegamento de los modelos}
+
+\subsection{Contenido completo (6 líneas)}
+
+\begin{lstlisting}
+from .user import User
+from .service import Service
+from .booking import Booking
+from .itinerary import Itinerary
+from .message import Message
+from .review import Review
+\end{lstlisting}
+
+\subsection{¿Qué es?}
+
+Es un \texttt{\_\_init\_\_.py} \textbf{con contenido}: en lugar de estar vacío, aquí hace
+\textbf{dos trabajos} a la vez:
+\begin{enumerate}
+    \item Convierte a \texttt{models/} en un \textbf{paquete importable} (como vimos en \texttt{db/}).
+    \item \textbf{Importa todos los modelos} para que sean ``visibles'' de un solo golpe.
+\end{enumerate}
+
+\subsection{La importación con punto (\texttt{from .user import User})}
+
+El \textbf{punto} (\texttt{.}) significa ``\textbf{desde la misma carpeta}''. Es decir:
+``desde el archivo \texttt{user} (de esta carpeta), trae la clase \texttt{User}''.
+
+Es una importación \textbf{relativa}: no busca en todo el proyecto, solo en la carpeta actual.
+
+\subsubsection{¿Para qué se hace esto?}
+
+Fíjate cómo usa \texttt{main.py}:
+
+\begin{lstlisting}
+from app.models import User, Service, Booking, Itinerary, Message, Review
+\end{lstlisting}
+
+\textbf{Solo importa la carpeta} \texttt{app.models}, no cada archivo. Gracias a
+\texttt{\_\_init\_\_.py}, esa sola línea trae \textbf{todas las clases} de golpe. Sin él,
+habría que escribir seis imports uno por uno:
+
+\begin{lstlisting}
+from app.models.user import User
+from app.models.service import Service
+...
+\end{lstlisting}
+
+\subsubsection{El detalle CLAVE: ¿por qué importarlos aquí?}
+
+Recuerda \texttt{main.py}:
+\begin{lstlisting}
+Base.metadata.create_all(bind=engine)
+\end{lstlisting}
+
+Esa línea crea las tablas \textbf{de todos los modelos que ya estén importados}.
+Como \texttt{models/\_\_init\_\_.py} importa \textbf{todos}, con importar la carpeta
+\texttt{app.models} una vez, \textbf{Python ya ``conoce'' las 6 tablas} y las crea todas.
+
+\begin{analogia}
+\texttt{models/\_\_init\_\_.py} es como el \textbf{registro de propiedades}: cuando llega el
+arquitecto (main.py) a preguntar ``¿qué edificios hay?'' (create\_all), el registro le
+muestra la lista completa. Si algún modelo no estuviera ahí, su tabla no se crearía.
+\end{analogia}
+
+\begin{recuadro}
+\texttt{models/\_\_init\_\_.py} = \textbf{el registro de los modelos}. Importar
+\texttt{app.models} basta para que \texttt{create\_all} cree las 6 tablas.
+\end{recuadro}
+
+% ============================================================
+\section{Resumen de \texttt{models/} --- las 6 tablas}
+
+\begin{center}
+{\small
+\setlength{\tabcolsep}{4pt}
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{3.2cm}>{\raggedright\arraybackslash}p{5.4cm}>{\raggedright\arraybackslash}p{6.3cm}@{}}
+\toprule
+\textbf{Tabla} & \textbf{Qué guarda} & \textbf{A qué apunta} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Tabla} & \textbf{Qué guarda} & \textbf{A qué apunta} \\
+\midrule
+\endhead
+\texttt{users} & Usuarios (turista, prestador, admin) & --- \\
+\texttt{services} & Servicios ofrecidos (guía, hotel) & \texttt{users.id} (dueño) \\
+\texttt{bookings} & Reservas de un turista sobre un servicio & \texttt{users.id} + \texttt{services.id} \\
+\texttt{itineraries} & Plan diario con la ruta del mapa & \texttt{users.id} \\
+\texttt{messages} & Mensajes del chat & \texttt{users.id} x2 + \texttt{bookings.id} \\
+\texttt{reviews} & Reseñas con nota de 1 a 5 & \texttt{bookings.id} + \texttt{users.id} + \texttt{services.id} \\
+\bottomrule
+\end{longtable}
+}
+\end{center}
+
+\begin{recuadro}
+\textbf{Modelos completos.} Ya entendemos cómo se guarda la información de TravelHub:
+6 tablas conectadas por claves foráneas. El siguiente gran bloque es
+\textbf{\texttt{schemas/}} (los ``formularios'' de validación que usan las rutas).
+\end{recuadro}
+
+% ============================================================
+\section{\texttt{schemas/} --- los ``formularios'' de validación}
+
+\subsection{¿Qué es \texttt{schemas/}?}
+
+Carpeta que contiene los \textbf{schemas} (esquemas) de Pydantic. Si los \texttt{models/}
+definen \textbf{cómo se guarda} la información en la base de datos, los \texttt{schemas/}
+definen \textbf{qué información entra y sale} de la API y \textbf{cómo validarla}.
+
+\begin{analogia}
+Los modelos son el \textbf{cajón del archivo} donde se guardan los papeles (base de datos).
+Los schemas son los \textbf{formularios de entrada}: te dicen ``aquí llena nombre, aquí email''.
+Si llenas mal el formulario, te lo devuelven con errores antes de guardarlo.
+\end{analogia}
+
+\subsection{¿Por qué se necesitan? ¿No bastan los modelos?}
+
+\textbf{Seguridad y claridad.} Tres razones:
+
+\begin{enumerate}
+    \item \textbf{El usuario no debe enviar todo.} Al registrarse, el turista envía solo
+    \texttt{name}, \texttt{email}, \texttt{password} y \texttt{role}. No le dejas elegir su
+    propio \texttt{id} ni \texttt{created\_at} (esos los pone el sistema).
+    \item \textbf{Validación automática.} Si el email tiene mal formato o falta un campo,
+    Pydantic \textbf{rechaza la petición} con un mensaje de error claro, \emph{antes} de tocar
+    la base de datos.
+    \item \textbf{El frontend sabe qué enviar.} El schema es como un ``contrato'': documenta
+    qué campos espera cada endpoint.
+\end{enumerate}
+
+\subsection{Pydantic: el ``inspector'' de FastAPI}
+
+Pydantic es la librería (la vimos en \texttt{requirements.txt}) que valida datos con sintaxis
+de Python moderna. Un schema se escribe así:
+
+\begin{lstlisting}
+from pydantic import BaseModel, EmailStr
+
+class UserCreate(BaseModel):
+    name: str
+    email: EmailStr
+    password: str
+    role: str
+\end{lstlisting}
+
+\texttt{BaseModel} es la ``plantilla de formulario''. Cada línea es un campo con su tipo
+(\texttt{str} = texto). Pydantic revisa que lo que llega cumpla el tipo: si pides
+\texttt{email: EmailStr} y llega ``hola'', lo rechaza.
+
+\subsubsection{Los archivos de la carpeta}
+
+\begin{itemize}
+    \item \texttt{user.py} --- formularios de usuario (registro).
+    \item \texttt{token.py} --- el ``carnet'' que se devuelve al hacer login.
+    \item \texttt{service.py}, \texttt{booking.py}, \texttt{itinerary.py}, \texttt{message.py}, \texttt{review.py} --- formularios para crear/actualizar cada entidad.
+    \item \texttt{cost.py} --- formulario de costos.
+\end{itemize}
+
+Empezamos por \texttt{user.py}, que conecta con el modelo \texttt{User} que ya conocemos.
+
+% ============================================================
+\section{\texttt{schemas/user.py} --- el formulario de registro}
+
+\subsection{Contenido completo (7 líneas)}
+
+\begin{lstlisting}
+from pydantic import BaseModel, EmailStr
+
+class UserCreate(BaseModel):
+    name: str
+    email: EmailStr
+    password: str
+    role: str  # turista, prestador, admin
+\end{lstlisting}
+
+\subsection{Explicación concepto por concepto}
+
+\subsubsection{El import (línea 1)}
+
+\begin{lstlisting}
+from pydantic import BaseModel, EmailStr
+\end{lstlisting}
+
+\begin{itemize}
+    \item \texttt{BaseModel}: la plantilla base de Pydantic para crear un formulario.
+    \item \texttt{EmailStr}: un tipo especial que \textbf{solo acepta emails bien formados}
+    (por eso en \texttt{requirements.txt} estaba \texttt{email-validator}).
+\end{itemize}
+
+\subsubsection{La clase \texttt{UserCreate} (líneas 3--7)}
+
+El nombre dice \textbf{para qué sirve}: \texttt{User} + \texttt{Create} = ``los datos que el
+cliente envía para \textbf{crear} un usuario''.
+
+Cada línea es un campo: \texttt{nombre: tipo}.
+\begin{itemize}
+    \item \texttt{name: str} --- el nombre, texto.
+    \item \texttt{email: EmailStr} --- el correo, validado como correo.
+    \item \texttt{password: str} --- la contraseña, texto.
+    \item \texttt{role: str} --- el rol (turista, prestador, admin).
+\end{itemize}
+
+\subsubsection{Los ``poderes'' que da \texttt{BaseModel}}
+
+Al heredar de \texttt{BaseModel}, el formulario gana herramientas automáticas:
+
+\begin{itemize}
+    \item \textbf{Validación:} si falta un campo o el tipo no coincide, Pydantic responde 422
+    (``petición inválida'') con los errores.
+    \item \textbf{Conversión:} si llega \texttt{role} como algo convertible a texto, lo pasa a \texttt{str}.
+    \item \textbf{Serialización:} convierte el formulario a JSON fácilmente (\texttt{.model\_dump()}).
+\end{itemize}
+
+\subsection{Comparación: \texttt{models/User} vs \texttt{schemas/UserCreate}}
+
+\begin{center}
+{\small
+\setlength{\tabcolsep}{4pt}
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{4.2cm}>{\raggedright\arraybackslash}p{5.2cm}>{\raggedright\arraybackslash}p{5.5cm}@{}}
+\toprule
+\textbf{Aspecto} & \textbf{models/user.py} & \textbf{schemas/user.py} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Aspecto} & \textbf{models/user.py} & \textbf{schemas/user.py} \\
+\midrule
+\endhead
+Para qué & Guardar en la base de datos & Recibir/validar datos del cliente \\
+Base & \texttt{Base} (SQLAlchemy) & \texttt{BaseModel} (Pydantic) \\
+Campos & 10 columnas (id, created\_at\ldots) & Solo 4 campos que envía el cliente \\
+Contraseña & Guarda \texttt{password\_hash} & Recibe \texttt{password} (texto plano) \\
+Valida & Reglas de la base (nullable, unique) & Tipos (str, EmailStr) \\
+\bottomrule
+\end{longtable}
+}
+\end{center}
+
+\subsubsection{El detalle de la contraseña}
+
+El formulario recibe \texttt{password} en \textbf{texto plano} (lo que el usuario escribe).
+El modelo guarda \texttt{password\_hash} (\textbf{encriptada}). ¿Quién hace la conversión?
+La ruta \texttt{auth} (que veremos pronto): recibe el formulario, \textbf{encripta} la
+contraseña, y guarda el hash en el modelo. \textbf{El schema y el modelo nunca mezclan sus responsabilidades}.
+
+\begin{recuadro}
+\texttt{schemas} = \textbf{formularios de entrada} (Pydantic). \texttt{models} = \textbf{cajones
+de guardado} (SQLAlchemy). El schema valida lo que llega; el modelo define cómo se guarda.
+\end{recuadro}
+
+% ============================================================
+\section{\texttt{schemas/token.py} --- los formularios del login}
+
+\subsection{Contenido completo (9 líneas)}
+
+\begin{lstlisting}
+from pydantic import BaseModel
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+class LoginRequest(BaseModel):
+    email: str
+    password: str
+\end{lstlisting}
+
+\subsection{¿Qué contiene? Dos clases en un solo archivo}
+
+A diferencia de \texttt{user.py}, aquí hay \textbf{dos formularios} en el mismo archivo.
+Cada uno tiene un trabajo distinto:
+
+\subsection{\texttt{LoginRequest} --- lo que el cliente \textbf{envía}}
+
+\begin{lstlisting}
+class LoginRequest(BaseModel):
+    email: str
+    password: str
+\end{lstlisting}
+
+Es el formulario de \textbf{entrada}: el cliente envía \texttt{email} y \texttt{password}
+cuando quiere iniciar sesión. Sin este schema, la ruta \texttt{auth} tendría que adivinar
+qué campos esperar.
+
+\subsection{\texttt{Token} --- lo que el servidor \textbf{devuelve}}
+
+\begin{lstlisting}
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+\end{lstlisting}
+
+Es el formulario de \textbf{salida}: el servidor responde con el ``carnet'' de acceso.
+
+\begin{itemize}
+    \item \texttt{access\_token}: el \textbf{token JWT} (texto largo encriptado).
+    \item \texttt{token\_type}: el tipo, casi siempre \texttt{"bearer"} (significa ``este token
+    autoriza al que lo lleva'').
+\end{itemize}
+
+\begin{analogia}
+\texttt{LoginRequest} es la \textbf{solicitud del pase} (``me llamo X y esta es mi contraseña'').
+\texttt{Token} es el \textbf{pase de acceso} que te dan al entrar (``este es tu carnet'').
+Con él puedes pedir las cosas restringidas sin volver a mostrar tu contraseña.
+\end{analogia}
+
+\subsection{Cómo funciona el login con estos dos formularios}
+
+\begin{enumerate}
+    \item El frontend envía \texttt{LoginRequest} (\texttt{email} + \texttt{password}).
+    \item La ruta \texttt{auth} verifica las credenciales en la base.
+    \item Si son correctas, crea un \textbf{token JWT} (usando \texttt{SECRET\_KEY} y
+    \texttt{ALGORITHM} de \texttt{config.py}).
+    \item Devuelve un \texttt{Token} con el \texttt{access\_token}.
+    \item El frontend guarda el token y lo envía en cada petición siguiente, como prueba de ``ya entré''.
+\end{enumerate}
+
+\subsubsection{El detalle de la validez del token}
+
+Recuerda \texttt{config.py}: \texttt{ACCESS\_TOKEN\_EXPIRE\_MINUTES = 30}. Eso significa que el
+token tiene \textbf{fecha de caducidad}: después de 30 minutos deja de servir y hay que volver
+a iniciar sesión. Así, si el token se roba, sirve de poco.
+
+\begin{recuadro}
+\texttt{LoginRequest} = qué envía el cliente (entrada). \texttt{Token} = qué devuelve el
+servidor (salida). Ambos forman el ``rito'' del login con JWT.
+\end{recuadro}
+
+% ============================================================
+\section{\texttt{schemas/service.py} --- formularios de servicio}
+
+\subsection{Contenido completo (17 líneas)}
+
+\begin{lstlisting}
+from pydantic import BaseModel
+from typing import Optional
+
+class ServiceCreate(BaseModel):
+    type: str  # "guia" o "hotel"
+    name: str
+    description: str
+    price: float
+    location: str
+
+class ServiceUpdate(BaseModel):
+    type: Optional[str] = None
+    name: Optional[str] = None
+    description: Optional[str] = None
+    price: Optional[float] = None
+    location: Optional[str] = None
+    available: Optional[bool] = None
+\end{lstlisting}
+
+\subsection{¿Qué contiene? \textbf{Dos} formularios: crear y actualizar}
+
+Este archivo introduce un patrón nuevo: \textbf{dos clases para dos operaciones distintas}.
+
+\subsection{\texttt{ServiceCreate} --- crear un servicio}
+
+\begin{lstlisting}
+class ServiceCreate(BaseModel):
+    type: str
+    name: str
+    description: str
+    price: float
+    location: str
+\end{lstlisting}
+
+Es el formulario de \textbf{creación}: todos los campos son \textbf{obligatorios} (no tienen
+valor por defecto). El cliente que quiere publicar un servicio debe enviarlos todos.
+
+\begin{itemize}
+    \item \texttt{type}: \texttt{"guia"} o \texttt{"hotel"} (igual que el modelo).
+    \item \texttt{price: float}: nota el tipo \texttt{float} (Pydantic usa minúsculas;
+    en SQLAlchemy era \texttt{Float}).
+    \item \textbf{Ojo:} no incluye \texttt{provider\_id}. Ese lo pone la \textbf{ruta}
+    automáticamente con el usuario autenticado (``el que crea el servicio es su dueño'').
+\end{itemize}
+
+\subsection{\texttt{ServiceUpdate} --- actualizar un servicio}
+
+\begin{lstlisting}
+class ServiceUpdate(BaseModel):
+    type: Optional[str] = None
+    ...
+    available: Optional[bool] = None
+\end{lstlisting}
+
+Es el formulario de \textbf{actualización} y es la novedad pedagógica de hoy:
+
+\begin{itemize}
+    \item \texttt{Optional[str]} = ``este campo puede venir \textbf{o no}'' (puede ser texto o \texttt{None}).
+    \item \texttt{= None} = si no se envía, por defecto vale \texttt{None} (``no se tocó'').
+    \item Incluye \texttt{available}, que no estaba en \texttt{Create}: para activar/desactivar
+    un servicio (abrirlo o cerrarlo) sin reescribir los demás datos.
+\end{itemize}
+
+\subsubsection{¿Por qué \texttt{Optional} es importante aquí?}
+
+\textbf{Para actualizar solo una parte.} Si un prestador quiere cambiar solo el precio, envía
+\emph{solo} \texttt{price}. Con \texttt{Optional}, los demás campos son \texttt{None} y la ruta
+sabe que ``no se deben tocar''. Si fueran obligatorios, tendría que reenviar todo el servicio.
+
+\begin{analogia}
+\texttt{ServiceCreate} es el \textbf{formulario de alta} completo (todos los datos nuevos).
+\texttt{ServiceUpdate} es el \textbf{formulario de cambios}: rellenas solo la casilla que
+quieres modificar y dejas las demás en blanco.
+\end{analogia}
+
+\subsection{Los patrones de Pydantic que ya conocemos... y el nuevo}
+
+\begin{center}
+{\small
+\setlength{\tabcolsep}{4pt}
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{4.5cm}>{\raggedright\arraybackslash}p{5.2cm}>{\raggedright\arraybackslash}p{5.2cm}@{}}
+\toprule
+\textbf{Patrón} & \textbf{Significado} & \textbf{Cuándo se usa} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Patrón} & \textbf{Significado} & \textbf{Cuándo se usa} \\
+\midrule
+\endhead
+\texttt{campo: str} & Obligatorio & Crear (todo llega completo) \\
+\texttt{campo: str = "x"} & Valor por defecto & Crear con valor inicial \\
+\texttt{campo: Optional[str] = None} & Opcional & Actualizar (solo lo que cambia) \\
+\bottomrule
+\end{longtable}
+}
+\end{center}
+
+\begin{recuadro}
+\texttt{ServiceCreate} = formulario completo (todo obligatorio).
+\texttt{ServiceUpdate} = formulario parcial (todo opcional con \texttt{Optional}).
+El patrón ``uno para crear, otro para actualizar'' se repetirá en el resto de la carpeta.
+\end{recuadro}
+
+% ============================================================
+\section{\texttt{schemas/booking.py} --- formularios de reserva}
+
+\subsection{Contenido completo (9 líneas)}
+
+\begin{lstlisting}
+from pydantic import BaseModel
+from datetime import datetime
+
+class BookingCreate(BaseModel):
+    service_id: int
+    date: datetime
+
+class BookingStatusUpdate(BaseModel):
+    status: str  # confirmada, cancelada
+\end{lstlisting}
+
+\subsection{¿Qué contiene? Formularios de \textbf{crear} y \textbf{cambiar estado}}
+
+\subsection{\texttt{BookingCreate} --- reservar un servicio}
+
+\begin{lstlisting}
+class BookingCreate(BaseModel):
+    service_id: int
+    date: datetime
+\end{lstlisting}
+
+El turista solo envía \textbf{dos cosas} para reservar:
+\begin{itemize}
+    \item \texttt{service\_id}: \textbf{qué} servicio quiere (apunta al servicio).
+    \item \texttt{date}: \textbf{cuándo} (fecha y hora).
+\end{itemize}
+
+\subsubsection{El nuevo tipo \texttt{datetime}}
+
+\begin{itemize}
+    \item \texttt{datetime} (de la librería \texttt{datetime} de Python): representa
+    \textbf{fecha y hora} a la vez (ej. ``2026-08-10 14:30'').
+    \item Pydantic lo \textbf{valida y lo convierte}: si llega un texto con formato de fecha,
+    lo transforma automáticamente a un objeto \texttt{datetime} antes de guardarlo.
+\end{itemize}
+
+\subsubsection{¿Qué \textbf{no} envía el cliente?}
+
+Fíjate lo que falta (comparando con el modelo \texttt{Booking}):
+\begin{itemize}
+    \item \texttt{tourist\_id}: lo pone la \textbf{ruta} (el turista autenticado).
+    \item \texttt{total}: lo calcula la \textbf{ruta} con el precio del servicio.
+    \item \texttt{status}: empieza en \texttt{"pendiente"} solo.
+    \item \texttt{id} y \texttt{created\_at}: los pone el sistema.
+\end{itemize}
+
+El cliente no puede decidir el estado ni el total: eso lo controla el servidor. \textbf{Seguridad}.
+
+\subsection{\texttt{BookingStatusUpdate} --- cambiar el estado}
+
+\begin{lstlisting}
+class BookingStatusUpdate(BaseModel):
+    status: str  # confirmada, cancelada
+\end{lstlisting}
+
+Es un formulario \textbf{mini}: solo un campo. Se usa cuando un prestador (o turista)
+\textbf{confirma o cancela} una reserva. Envía el nuevo estado y la ruta lo actualiza.
+
+\subsection{Comparación rápida con el modelo \texttt{Booking}}
+
+\begin{center}
+{\small
+\setlength{\tabcolsep}{4pt}
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{3.4cm}>{\raggedright\arraybackslash}p{4.6cm}>{\raggedright\arraybackslash}p{6.9cm}@{}}
+\toprule
+\textbf{Campo} & \textbf{Modelo Booking} & \textbf{Quién lo llena} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Campo} & \textbf{Modelo Booking} & \textbf{Quién lo llena} \\
+\midrule
+\endhead
+\texttt{service\_id} & Sí & El cliente (\texttt{BookingCreate}) \\
+\texttt{date} & Sí & El cliente (\texttt{BookingCreate}) \\
+\texttt{tourist\_id} & Sí & La ruta (usuario autenticado) \\
+\texttt{total} & Sí & La ruta (calculado del servicio) \\
+\texttt{status} & Sí & Empieza \texttt{pendiente}; cambia con \texttt{BookingStatusUpdate} \\
+\texttt{id} / \texttt{created\_at} & Sí & El sistema \\
+\bottomrule
+\end{longtable}
+}
+\end{center}
+
+\begin{recuadro}
+\texttt{BookingCreate} = el turista elige \textbf{qué} (\texttt{service\_id}) y \textbf{cuándo}
+(\texttt{date}). \texttt{BookingStatusUpdate} = confirma o cancela. Lo demás lo controla el servidor.
+\end{recuadro}
+
+% ============================================================
+\section{\texttt{schemas/itinerary.py} --- formularios del itinerario}
+
+\subsection{Contenido completo (30 líneas)}
+
+\begin{lstlisting}
+from pydantic import BaseModel
+from typing import Optional, List, Dict, Any
+
+class ItineraryCreate(BaseModel):
+    day: int
+    route_data: Dict[str, Any]
+
+class ItineraryUpdate(BaseModel):
+    route_data: Dict[str, Any]
+
+class RoutePoint(BaseModel):
+    lat: float
+    lng: float
+    name: str = ""
+    order: int = 0
+
+class DirectionsRequest(BaseModel):
+    origin: RoutePoint
+    destination: RoutePoint
+    waypoints: List[RoutePoint] = []
+
+class DirectionsResponse(BaseModel):
+    total_distance_m: float
+    total_distance_km: float
+    total_duration_s: float
+    total_duration_min: float
+    total_duration_text: str
+    legs: List[Dict[str, Any]]
+    polyline: str
+    source: str
+\end{lstlisting}
+
+\subsection{¿Qué contiene? \textbf{Cinco} clases (el archivo más completo)}
+
+Este archivo tiene \textbf{5 formularios}, y es el más interesante de la carpeta porque
+introduce \textbf{tipos nuevos} y el concepto de \textbf{formularios anidados}.
+
+\subsection{\texttt{ItineraryCreate} y \texttt{ItineraryUpdate} --- el plan diario}
+
+\begin{lstlisting}
+class ItineraryCreate(BaseModel):
+    day: int
+    route_data: Dict[str, Any]
+
+class ItineraryUpdate(BaseModel):
+    route_data: Dict[str, Any]
+\end{lstlisting}
+
+\begin{itemize}
+    \item \texttt{ItineraryCreate}: día del viaje (\texttt{int}) + la ruta (\texttt{route\_data}).
+    \item \texttt{ItineraryUpdate}: solo la ruta (se actualiza el plan de ese día).
+    \item \texttt{Dict[str, Any]}: un \textbf{diccionario} (la ``bolsa'' con nombre $\rightarrow$ valor).
+    Aquí: ``guardar cualquier cosa bajo etiquetas'' (los puntos del mapa, como vimos en el modelo).
+\end{itemize}
+
+\subsubsection{El nuevo tipo \texttt{Dict[str, Any]}}
+
+\begin{itemize}
+    \item \texttt{Dict} = diccionario: pares \texttt{clave: valor} (como un \texttt{JSON} en Python).
+    \item \texttt{Dict[str, Any]} = ``claves de texto, valores de \textbf{lo que sea}'' (\texttt{Any}).
+    \item Es \textbf{flexible}: ideal cuando no sabes exactamente la estructura que vendrá (datos del mapa).
+\end{itemize}
+
+\subsection{\texttt{RoutePoint} --- un punto de la ruta (formulario anidado)}
+
+\begin{lstlisting}
+class RoutePoint(BaseModel):
+    lat: float
+    lng: float
+    name: str = ""
+    order: int = 0
+\end{lstlisting}
+
+Representa \textbf{un punto geográfico}: latitud, longitud, nombre opcional y orden.
+
+\subsubsection{Los campos con valor por defecto}
+
+\texttt{name: str = ""} y \texttt{order: int = 0} tienen \textbf{valores por defecto}: si no se
+envían, se usan esos. Por eso son \textbf{opcionales de facto} (siempre tienen algo).
+
+\subsection{\texttt{DirectionsRequest} --- pedir la ruta entre puntos}
+
+\begin{lstlisting}
+class DirectionsRequest(BaseModel):
+    origin: RoutePoint
+    destination: RoutePoint
+    waypoints: List[RoutePoint] = []
+\end{lstlisting}
+
+Aquí está \textbf{el formulario anidado}: los campos no son tipos simples, sino \textbf{otros
+formularios} (\texttt{RoutePoint}).
+
+\begin{itemize}
+    \item \texttt{origin}: el punto de \textbf{partida} (un \texttt{RoutePoint}).
+    \item \texttt{destination}: el punto de \textbf{llegada} (un \texttt{RoutePoint}).
+    \item \texttt{waypoints}: puntos \textbf{intermedios}. El tipo \texttt{List[RoutePoint]}
+    = ``una \textbf{lista} de puntos'' (0 o más). Por defecto, lista vacía.
+\end{itemize}
+
+\subsubsection{El nuevo tipo \texttt{List}}
+
+\texttt{List[X]} = ``una lista de elementos de tipo X''. Aquí: una lista de puntos intermedios
+para rutas con varias paradas (``sal de A, pasa por B y C, llega a D'').
+
+\begin{analogia}
+\texttt{DirectionsRequest} es como pedir indicaciones a la app de mapas: ``saliendo de
+\textbf{origen}, pasando por \textbf{waypoints}, hasta \textbf{destino}''. Cada punto es un
+formulario dentro del formulario (matrioshka).
+\end{analogia}
+
+\subsection{\texttt{DirectionsResponse} --- la respuesta del mapa}
+
+\begin{lstlisting}
+class DirectionsResponse(BaseModel):
+    total_distance_m: float
+    total_distance_km: float
+    total_duration_s: float
+    total_duration_min: float
+    total_duration_text: str
+    legs: List[Dict[str, Any]]
+    polyline: str
+    source: str
+\end{lstlisting}
+
+Es un formulario de \textbf{salida}: define la forma de la respuesta que devuelve el servidor
+cuando se le pide una ruta. Contiene:
+\begin{itemize}
+    \item Distancia total en metros y kilómetros.
+    \item Duración total en segundos, minutos y como texto legible.
+    \item \texttt{legs}: las ``etapas'' del viaje (lista de diccionarios).
+    \item \texttt{polyline}: el ``hilo'' codificado del recorrido (para dibujarlo en el mapa).
+    \item \texttt{source}: de dónde salió la respuesta (Google Maps u otra fuente).
+\end{itemize}
+
+\textbf{¿De dónde sale esta respuesta?} Del trabajo con \texttt{maps\_utils.py} y la API de
+Google Maps. Aún no lo vemos, pero ya sabes que su salida sigue esta plantilla.
+
+\subsection{Los formularios \textbf{anidados} (la idea clave del archivo)}
+
+Un formulario puede contener \textbf{otros formularios} como campos. Es como las muñecas rusas:
+\texttt{DirectionsRequest} contiene \texttt{RoutePoint}, y \texttt{RoutePoint} contiene
+\texttt{float} y \texttt{str}. Pydantic valida \textbf{todo el árbol} automáticamente.
+
+\begin{recuadro}
+Este archivo muestra lo potente de Pydantic: formularios \textbf{anidados}
+(\texttt{DirectionsRequest} usa \texttt{RoutePoint}) y tipos \textbf{flexibles}
+(\texttt{Dict[str, Any]}, \texttt{List[...]}). El itinerario guarda la ruta; las direcciones
+la calculan con el mapa.
+\end{recuadro}
+
+% ============================================================
+\section{\texttt{schemas/message.py} --- formulario del mensaje}
+
+\subsection{Contenido completo (7 líneas)}
+
+\begin{lstlisting}
+from pydantic import BaseModel
+from datetime import datetime
+
+class MessageCreate(BaseModel):
+    receiver_id: int
+    booking_id: int
+    content: str
+\end{lstlisting}
+
+\subsection{¿Qué contiene? Un solo formulario}
+
+Es el archivo \textbf{más corto de la carpeta}: solo \texttt{MessageCreate}, con 3 campos.
+\begin{itemize}
+    \item \texttt{receiver\_id}: \textbf{a quién} va el mensaje (el id del destinatario).
+    \item \texttt{booking\_id}: \textbf{de qué reserva} se habla.
+    \item \texttt{content}: el \textbf{texto} del mensaje.
+\end{itemize}
+
+\subsection{Lo que el cliente \textbf{no} envía}
+
+Recuerda el modelo \texttt{Message}: tenía \texttt{sender\_id}, \texttt{read} y
+\texttt{timestamp}. Aquí no están:
+\begin{itemize}
+    \item \texttt{sender\_id}: lo pone la \textbf{ruta} (``el que escribe eres tú, el autenticado'').
+    \item \texttt{read}: siempre empieza en \texttt{False} (recién enviado, aún no leído).
+    \item \texttt{timestamp}: lo pone la base de datos.
+\end{itemize}
+
+\subsection{Cómo se conecta con \texttt{ws.py} y el modelo \texttt{Message}}
+
+En \texttt{ws.py} el mensaje llega por el \textbf{WebSocket} y no usa este formulario
+(la validación la hace a mano con diccionarios). Pero \texttt{MessageCreate} existe para las
+rutas \texttt{messages} (las peticiones HTTP normales): sirve el mismo propósito, validando
+\textbf{receiver\_id}, \textbf{booking\_id} y \textbf{content} antes de crear el mensaje.
+
+\begin{analogia}
+Es como la \textbf{planilla del mensajero}: para enviar un mensaje solo llenas ``destinatario'',
+``asunto (reserva)'' y ``texto''. El remitente (sender) y la fecha los pone la oficina.
+\end{analogia}
+
+\begin{recuadro}
+\texttt{MessageCreate} = 3 campos mínimos: \textbf{a quién}, \textbf{de qué reserva} y
+\textbf{el texto}. El emisor, el leído y la fecha los controla el servidor.
+\end{recuadro}
+
+% ============================================================
+\section{\texttt{schemas/review.py} --- formularios de la reseña}
+
+\subsection{Contenido completo (20 líneas)}
+
+\begin{lstlisting}
+import datetime
+from typing import Optional
+from pydantic import BaseModel
+
+class ReviewCreate(BaseModel):
+    booking_id: int
+    rating: int  # 1-5
+    comment: str = ""
+
+class ReviewResponse(BaseModel):
+    id: int
+    booking_id: int
+    tourist_id: int
+    service_id: int
+    rating: int
+    comment: str
+    created_at: Optional[datetime.datetime] = None
+
+    class Config:
+        from_attributes = True
+\end{lstlisting}
+
+\subsection{¿Qué contiene? Un formulario de \textbf{entrada} y otro de \textbf{salida}}
+
+Este archivo introduce el \textbf{segundo gran patrón} de Pydantic: el par
+\textbf{Create} (entrada) y \textbf{Response} (salida). Lo vimos con \texttt{token.py}
+(\texttt{LoginRequest}/\texttt{Token}), pero aquí está completo.
+
+\subsection{\texttt{ReviewCreate} --- lo que envía el turista}
+
+\begin{lstlisting}
+class ReviewCreate(BaseModel):
+    booking_id: int
+    rating: int  # 1-5
+    comment: str = ""
+\end{lstlisting}
+
+\begin{itemize}
+    \item \texttt{booking\_id}: a qué reserva corresponde la reseña (obligatorio).
+    \item \texttt{rating}: la nota de 1 a 5 (obligatorio).
+    \item \texttt{comment: str = ""}: el comentario, con valor por defecto \texttt{""} (si no
+    se envía, se guarda vacío; no es obligatorio).
+\end{itemize}
+
+\subsection{\texttt{ReviewResponse} --- lo que devuelve el servidor}
+
+\begin{lstlisting}
+class ReviewResponse(BaseModel):
+    id: int
+    booking_id: int
+    tourist_id: int
+    service_id: int
+    rating: int
+    comment: str
+    created_at: Optional[datetime.datetime] = None
+\end{lstlisting}
+
+Es la ``foto completa'' de una reseña que el cliente recibe como respuesta. Incluye campos que
+el cliente \textbf{no envió}: \texttt{id}, \texttt{tourist\_id}, \texttt{service\_id} y
+\texttt{created\_at}. Son datos que ya estaban en la base y se devuelven.
+
+\subsubsection{La novedad: \texttt{class Config: from\_attributes = True}}
+
+\begin{lstlisting}
+class Config:
+    from_attributes = True
+\end{lstlisting}
+
+Esta configuración le dice a Pydantic: ``\textbf{puedes construirme a partir de un objeto de
+la base de datos} (un modelo SQLAlchemy), no solo de un diccionario''.
+
+Gracias a esto, la ruta puede hacer simplemente:
+
+\begin{lstlisting}
+return ReviewResponse.model_validate(resena_de_la_base)
+\end{lstlisting}
+
+Pydantic ``lee'' los atributos del objeto de SQLAlchemy (\texttt{review.id}, \texttt{review.rating}, \ldots)
+y arma el formulario automáticamente. Sin esta línea, tendrías que convertir el modelo a mano,
+campo por campo.
+
+\begin{analogia}
+Es como darle al secretario \textbf{permiso de leer tu expediente}: con \texttt{from\_attributes}
+Pydantic puede ``leer'' directamente los datos guardados (el objeto del modelo) y llenar el
+formulario de salida sin que le dicten campo por campo.
+\end{analogia}
+
+\subsection{Los \textbf{tres} patrones de la carpeta \texttt{schemas/}}
+
+\begin{center}
+{\small
+\setlength{\tabcolsep}{4pt}
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{4.3cm}>{\raggedright\arraybackslash}p{5.4cm}>{\raggedright\arraybackslash}p{5.2cm}@{}}
+\toprule
+\textbf{Patrón} & \textbf{Ejemplo} & \textbf{Para qué} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Patrón} & \textbf{Ejemplo} & \textbf{Para qué} \\
+\midrule
+\endhead
+Create / Update & \texttt{ServiceCreate}, \texttt{ServiceUpdate} & Crear (todo) o actualizar (parcial) \\
+Entrada / Salida & \texttt{LoginRequest} / \texttt{Token} & Lo que envía el cliente / lo que responde \\
+Create / Response & \texttt{ReviewCreate} / \texttt{ReviewResponse} & Enviar datos / devolver la ``foto'' completa \\
+\bottomrule
+\end{longtable}
+}
+\end{center}
+
+\begin{recuadro}
+\texttt{ReviewCreate} = lo que el turista envía (3 campos). \texttt{ReviewResponse} = lo que el
+servidor devuelve (la reseña completa). \texttt{from\_attributes} permite armar la respuesta
+directamente desde el objeto de la base.
+\end{recuadro}
+
+% ============================================================
+\section{\texttt{schemas/cost.py} --- el formulario de costos}
+
+\subsection{Contenido completo (5 líneas)}
+
+\begin{lstlisting}
+from pydantic import BaseModel
+from typing import List
+
+class CostCalculateRequest(BaseModel):
+    booking_ids: List[int]
+\end{lstlisting}
+
+\subsection{¿Qué contiene? Un solo formulario, un solo campo}
+
+Es el archivo \textbf{más simple de la carpeta}: una clase con un único campo.
+
+\begin{itemize}
+    \item \texttt{booking\_ids}: una \textbf{lista de ids de reservas} (\texttt{List[int]}).
+    \item Recuerda el tipo \texttt{List} de \texttt{itinerary.py}: aquí es ``una lista de
+    números enteros''.
+\end{itemize}
+
+\subsection{¿Para qué sirve?}
+
+Para \textbf{calcular el costo total de varias reservas a la vez}. El turista envía los ids de
+las reservas que quiere ``pagar'' y el servidor (la ruta \texttt{costs}) suma sus totales y
+devuelve el costo total.
+
+\begin{analogia}
+Es como pasar al cajero el \textbf{montón de tickets} de compra: le entregas los números de
+los tickets (\texttt{booking\_ids}) y él te dice cuánto pagas en total.
+\end{analogia}
+
+\subsection{¿Por qué es una \textbf{lista} y no un número solo?}
+
+Porque el usuario puede querer liquidar \textbf{varias reservas juntas} (una sola ``cuenta'').
+Con \texttt{List[int]} se aceptan de una a muchas reservas en la misma petición, en vez de
+llamar al endpoint una vez por cada reserva.
+
+\subsubsection{¿Y por qué no se define la \textbf{respuesta} aquí?}
+
+La respuesta (el total calculado) es un dato simple que la ruta \texttt{costs} devuelve
+directamente como JSON (\texttt{\{"total": 150.5\}}), sin necesidad de un formulario.
+Este archivo solo define la \textbf{entrada}.
+
+\begin{recuadro}
+\texttt{CostCalculateRequest} = una lista de \texttt{booking\_ids}. Envías los tickets y el
+servidor calcula el total. Cierra la carpeta \texttt{schemas/} con un ejemplo sencillo de entrada.
+\end{recuadro}
+
+% ============================================================
+\section{Resumen de \texttt{schemas/} --- formularios de la API}
+
+\begin{center}
+{\small
+\setlength{\tabcolsep}{4pt}
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{3.6cm}>{\raggedright\arraybackslash}p{6.4cm}>{\raggedright\arraybackslash}p{4.9cm}@{}}
+\toprule
+\textbf{Archivo} & \textbf{Contiene} & \textbf{Tipo de formulario} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Archivo} & \textbf{Contiene} & \textbf{Tipo de formulario} \\
+\midrule
+\endhead
+\texttt{user.py} & \texttt{UserCreate} & Entrada (registro) \\
+\texttt{token.py} & \texttt{LoginRequest}, \texttt{Token} & Entrada / salida (login) \\
+\texttt{service.py} & \texttt{ServiceCreate}, \texttt{ServiceUpdate} & Crear / actualizar \\
+\texttt{booking.py} & \texttt{BookingCreate}, \texttt{BookingStatusUpdate} & Crear / cambiar estado \\
+\texttt{itinerary.py} & 5 clases (plan + direcciones) & Crear / rutas de mapa \\
+\texttt{message.py} & \texttt{MessageCreate} & Entrada (chat) \\
+\texttt{review.py} & \texttt{ReviewCreate}, \texttt{ReviewResponse} & Entrada / salida \\
+\texttt{cost.py} & \texttt{CostCalculateRequest} & Entrada (cálculo) \\
+\bottomrule
+\end{longtable}
+}
+\end{center}
+
+\begin{recuadro}
+\textbf{Schemas completos.} Los formularios definen qué entra y qué sale de la API.
+Con esto, la siguiente gran pieza es \textbf{\texttt{routes/}}: las rutas que RECIBEN estos
+formularios, hablan con la base de datos y devuelven las respuestas. ¡Es la parte que hace
+que todo suceda!
+\end{recuadro}
+
+% ============================================================
+\section{\texttt{routes/} --- los ``menús'' de la API}
+
+\subsection{¿Qué es \texttt{routes/}?}
+
+Carpeta con \textbf{los endpoints} (rutas) de la API: las direcciones URL que el frontend
+llama. Cada archivo agrupa las rutas de un tema:
+
+\begin{center}
+{\small
+\setlength{\tabcolsep}{4pt}
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{3.6cm}>{\raggedright\arraybackslash}p{11.3cm}@{}}
+\toprule
+\textbf{Archivo} & \textbf{Tema} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Archivo} & \textbf{Tema} \\
+\midrule
+\endhead
+\texttt{auth.py} & Registro, verificación de email, login (entrar y salir) \\
+\texttt{services.py} & Publicar, listar y buscar servicios turísticos \\
+\texttt{bookings.py} & Crear y gestionar reservas \\
+\texttt{itineraries.py} & Planes de viaje y rutas con el mapa \\
+\texttt{messages.py} & Mensajes (versión HTTP del chat) \\
+\texttt{reviews.py} & Reseñas y calificaciones \\
+\texttt{costs.py} & Cálculo de costos de varias reservas \\
+\texttt{admin.py} & Acciones de administrador (aprobar prestadores) \\
+\texttt{ws.py} & Chat en tiempo real con WebSockets \\
+\bottomrule
+\end{longtable}
+}
+\end{center}
+
+\subsection{¿Cómo se ve una ruta?}
+
+Una ruta es una función con un \textbf{decorador} que indica método y dirección:
+
+\begin{lstlisting}
+@router.post("/register")
+def register(user: UserCreate, db: Session = Depends(get_db)):
+    ...
+\end{lstlisting}
+
+\begin{itemize}
+    \item \texttt{@router.post("/register")}: ``cuando alguien haga \texttt{POST} a
+    \texttt{/register}, ejecuta esta función''.
+    \item \texttt{user: UserCreate}: FastAPI toma el cuerpo de la petición y lo \textbf{valida}
+    con el schema (lo que aprendimos en \texttt{schemas/}).
+    \item \texttt{db = Depends(get\_db)}: FastAPI abre una \textbf{sesión de base de datos},
+    se la presta a la función y la cierra al terminar (lo que aprendimos en \texttt{database.py}).
+\end{itemize}
+
+Empezamos por \texttt{auth.py}: la ``puerta de entrada'' de la app.
+
+% ============================================================
+\section{\texttt{routes/auth.py} --- la puerta de entrada (181 líneas)}
+
+\subsection{¿Qué hace este archivo?}
+
+Gestiona \textbf{todo el ciclo de identidad} del usuario:
+\begin{enumerate}
+    \item \textbf{Registrarse} (\texttt{/register}).
+    \item \textbf{Verificar el email} con un código (\texttt{/verify} y \texttt{/resend-code}).
+    \item \textbf{Iniciar sesión} (\texttt{/login}).
+    \item \textbf{Entrar con Google} (\texttt{/google}).
+    \item \textbf{Ver mi perfil} (\texttt{/me}).
+    \item Además, define \texttt{get\_current\_user}: la ``máquina de revisar el carnet'' que
+    usan \textbf{todos los demás archivos} para saber quién está haciendo la petición.
+\end{enumerate}
+
+\subsection{Los imports (líneas 1--16)}
+
+\begin{itemize}
+    \item \texttt{jwt}: crear y verificar los tokens JWT (la librería \texttt{pyjwt}).
+    \item \texttt{hashlib} y \texttt{os}: encriptar contraseñas y generar valores aleatorios.
+    \item \texttt{datetime}, \texttt{timedelta}: fechas y tiempos de expiración.
+    \item \texttt{Depends}, \texttt{APIRouter}, \texttt{HTTPException}: herramientas de FastAPI.
+    \item \texttt{OAuth2PasswordBearer}: el ``estándar'' para recibir tokens en peticiones.
+    \item \texttt{get\_db}, \texttt{User}, los schemas, y \texttt{config.py} (clave y algoritmo).
+    \item \texttt{email\_utils}: funciones de \texttt{email\_utils.py} (aún no visto):
+    generar el código de verificación y enviar el correo.
+\end{itemize}
+
+\subsection{La configuración (líneas 18--19)}
+
+\begin{lstlisting}
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
+router = APIRouter(prefix="/auth", tags=["auth"])
+\end{lstlisting}
+
+\begin{itemize}
+    \item \texttt{oauth2\_scheme}: le dice a FastAPI ``\textbf{cómo recibir el token}''
+    (normalmente en un encabezado \texttt{Authorization}). Es la puerta que revisa si la
+    petición trae carnet.
+    \item \texttt{prefix="/auth"}: todas las rutas de aquí empiezan con \texttt{/auth}.
+    Por eso se escribe \texttt{/register} y en realidad es \texttt{/auth/register}.
+    \item \texttt{tags=["auth"]}: solo organiza la documentación automática de FastAPI.
+\end{itemize}
+
+\subsection{Los mini-formularios locales (líneas 21--29)}
+
+\begin{lstlisting}
+class VerifyRequest(BaseModel):
+    email: str
+    code: str
+
+class ResendRequest(BaseModel):
+    email: str
+
+class GoogleAuthRequest(BaseModel):
+    id_token: str
+\end{lstlisting}
+
+Son schemas pequeños definidos \textbf{aquí mismo} (no en \texttt{schemas/}) porque son
+muy específicos de estas rutas:
+\begin{itemize}
+    \item \texttt{VerifyRequest}: email + código (para verificar).
+    \item \texttt{ResendRequest}: solo email (para reenviar el código).
+    \item \texttt{GoogleAuthRequest}: el \texttt{id\_token} que da Google.
+\end{itemize}
+
+\subsection{Las funciones de ayuda (líneas 31--44)}
+
+\subsubsection{Encriptar contraseñas: \texttt{hash\_password}}
+
+\begin{lstlisting}
+def hash_password(password: str) -> str:
+    salt = os.urandom(32).hex()
+    hash_obj = hashlib.sha256((salt + password).encode())
+    return f"{salt}:{hash_obj.hexdigest()}"
+\end{lstlisting}
+
+\begin{enumerate}
+    \item \texttt{salt} = una \textbf{cadena aleatoria} única (32 bytes aleatorios).
+    \item Mezcla el \texttt{salt} con la contraseña y los encripta juntos con \textbf{SHA-256}
+    (una ``picadora'' matemática irreversible).
+    \item Guarda \texttt{salt:hash} juntos.
+\end{enumerate}
+
+\subsubsection{¿Por qué el ``salt''?}
+
+Si dos usuarios usan la misma contraseña, sus hash serían idénticos (una pista para hackers).
+Con un salt \textbf{aleatorio} por usuario, aunque dos contraseñas sean iguales, los hash son
+\textbf{distintos}. Además, sin el salt, los hackers podrían usar tablas ya calculadas
+(diccionarios) para adivinar contraseñas.
+
+\begin{analogia}
+El hash es como \textbf{triturar carne}: se puede hacer pero no se puede volver a armar.
+El salt es \textbf{una especia distinta en cada triturada}: aunque la carne sea igual,
+la mezcla final siempre es diferente.
+\end{analogia}
+
+\subsubsection{Verificar contraseñas: \texttt{verify\_password}}
+
+\begin{lstlisting}
+def verify_password(password: str, hashed: str) -> bool:
+    salt, hash_value = hashed.split(":")
+    return hashlib.sha256((salt + password).encode()).hexdigest() == hash_value
+\end{lstlisting}
+
+Al hacer login, el usuario escribe su contraseña. Para comprobar: se \textbf{separa el salt}
+guardado, se vuelve a triturar \texttt{salt + contraseña}, y se compara con el hash guardado.
+Si coinciden, la contraseña es correcta. \textbf{La contraseña original nunca se guardó ni se compara}.
+
+\subsubsection{Crear el token: \texttt{create\_access\_token}}
+
+\begin{lstlisting}
+def create_access_token(data: dict):
+    to_encode = data.copy()
+    expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    to_encode.update({"exp": expire})
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+\end{lstlisting}
+
+\begin{enumerate}
+    \item Copia los datos que se quieren meter dentro del token (ej. email y rol).
+    \item Calcula la \textbf{fecha de vencimiento}: ahora + 30 minutos (de \texttt{config.py}).
+    \item Añade \texttt{"exp"} (expiration = vencimiento) a los datos.
+    \item Los \textbf{firma} con la \texttt{SECRET\_KEY} y el \texttt{ALGORITHM}.
+\end{enumerate}
+
+El JWT es como un \textbf{carnet firmado}: el contenido es legible, pero nadie puede
+cambiarlo sin la clave secreta (la firma dejaría de coincidir).
+
+\subsection{El registro: \texttt{POST /register} (líneas 46--76)}
+
+\begin{lstlisting}
+@router.post("/register")
+def register(user: UserCreate, db: Session = Depends(get_db)):
+    existing = db.query(User).filter(User.email == user.email).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="Email ya registrado")
+    ...
+\end{lstlisting}
+
+\textbf{Paso a paso:}
+\begin{enumerate}
+    \item Busca en la base si \textbf{ya existe} un usuario con ese email. Si sí,
+    responde \textbf{400} (``Email ya registrado'').
+    \item \textbf{Encripta} la contraseña con \texttt{hash\_password}.
+    \item Genera un \textbf{código de verificación} y su fecha de vencimiento (10 minutos).
+    \item Crea el \texttt{User} en memoria con: \texttt{verified=False},
+    \texttt{approved=True} si es turista / \texttt{False} si es prestador (¡recuerda la
+    aprobación del admin!).
+    \item Lo \textbf{guarda} en la base (\texttt{db.add} + \texttt{db.commit}).
+    \item \textbf{Envía el correo} con el código (\texttt{send\_verification\_email}).
+    \item Devuelve un mensaje y (¡ojo!) también el \texttt{code} en la respuesta.
+\end{enumerate}
+
+\textbf{HTTPException}: la forma de FastAPI de responder con un error. \texttt{status\_code=400}
+significa ``petición mala''. Los códigos 4xx son errores del cliente (algo mal en lo que envía).
+
+\subsubsection{Los códigos HTTP más usados en este proyecto}
+
+\begin{center}
+{\small
+\setlength{\tabcolsep}{4pt}
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{2.5cm}>{\raggedright\arraybackslash}p{12.4cm}@{}}
+\toprule
+\textbf{Código} & \textbf{Significado} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Código} & \textbf{Significado} \\
+\midrule
+\endhead
+\textbf{200} & Todo bien (éxito). \\
+\textbf{400} & Error del cliente (p. ej. email ya registrado, código incorrecto). \\
+\textbf{401} & No autorizado (p. ej. credenciales incorrectas, token inválido/expirado). \\
+\textbf{403} & Prohibido (no tienes permiso aunque estés identificado). \\
+\textbf{404} & No encontrado (el recurso no existe). \\
+\textbf{502} & Error del servidor al hablar con otro servicio (p. ej. Google). \\
+\bottomrule
+\end{longtable}
+}
+\end{center}
+
+\subsection{Verificar email: \texttt{POST /verify} (líneas 78--99)}
+
+\begin{lstlisting}
+@router.post("/verify")
+def verify_email(body: VerifyRequest, db: Session = Depends(get_db)):
+    db_user = db.query(User).filter(User.email == body.email).first()
+    ...
+    if db_user.verification_code != body.code:
+        raise HTTPException(status_code=400, detail="Código incorrecto")
+    if db_user.verification_code_expires < datetime.utcnow():
+        raise HTTPException(status_code=400, detail="Código expirado")
+    db_user.verified = True
+    ...
+    return {"message": ..., "access_token": token, "token_type": "bearer"}
+\end{lstlisting}
+
+\textbf{Paso a paso:}
+\begin{enumerate}
+    \item Busca al usuario por email. Si no existe, \textbf{404}.
+    \item Si ya está verificado, \textbf{400}.
+    \item Compara el código enviado con el guardado. Si no coincide, \textbf{400}.
+    \item Comprueba si el código \textbf{venció} (10 min). Si venció, \textbf{400}.
+    \item Marca \texttt{verified = True} y \textbf{limpia} el código (ya no se necesita).
+    \item \textbf{Crea un token} de acceso (¡verificar también inicia sesión!) y lo devuelve.
+\end{enumerate}
+
+\subsection{Reenviar código: \texttt{POST /resend-code} (líneas 101--116)}
+
+Es casi igual a \texttt{verify}, pero sin comprobar el código: genera uno \textbf{nuevo},
+lo guarda (con 10 minutos nuevos) y lo \textbf{reenvía por correo}. Para cuando el usuario
+perdió el código anterior o se le venció.
+
+\subsection{Iniciar sesión: \texttt{POST /login} (líneas 118--128)}
+
+\begin{lstlisting}
+@router.post("/login", response_model=Token)
+def login(user: LoginRequest, db: Session = Depends(get_db)):
+    db_user = db.query(User).filter(User.email == user.email).first()
+    if not db_user:
+        raise HTTPException(status_code=401, detail="Credenciales incorrectas")
+    if not verify_password(user.password, db_user.password_hash):
+        raise HTTPException(status_code=401, detail="Credenciales incorrectas")
+    token = create_access_token({"sub": db_user.email, "role": db_user.role})
+    return {"access_token": token, "token_type": "bearer"}
+\end{lstlisting}
+
+\textbf{Paso a paso:}
+\begin{enumerate}
+    \item Recibe \texttt{LoginRequest} (email + password) — el schema de \texttt{token.py}.
+    \item Busca al usuario por email. Si no existe, \textbf{401} (no digas si el email o la
+    contraseña fallaron: eso protege a los usuarios).
+    \item Verifica la contraseña con \texttt{verify\_password}. Si falla, \textbf{401}.
+    \item \textbf{Crea el token} con el email (\texttt{sub}) y el rol dentro.
+    \item Devuelve \texttt{Token} (el access\_token + tipo bearer).
+\end{enumerate}
+
+\textbf{¿Por qué \texttt{"sub"}?} Es un campo estándar de los JWT (subject = sujeto): identifica
+a quién pertenece el token. Aquí guarda el email.
+
+\subsection{Entrar con Google: \texttt{POST /google} (líneas 130--160)}
+
+\begin{lstlisting}
+@router.post("/google")
+def google_auth(body: GoogleAuthRequest, db: Session = Depends(get_db)):
+    try:
+        import requests
+        resp = requests.get(f"https://oauth2.googleapis.com/tokeninfo?id_token={body.id_token}")
+        ...
+        google_data = resp.json()
+        email = google_data.get("email")
+        ...
+        db_user = db.query(User).filter(User.email == email).first()
+        if not db_user:
+            db_user = User(name=name, email=email,
+                password_hash=hash_password(os.urandom(32).hex()),
+                role="turista", verified=True)
+            db.add(db_user); db.commit(); db.refresh(db_user)
+        token = create_access_token({"sub": db_user.email, "role": db_user.role})
+        return {"access_token": token, "token_type": "bearer", "user": {...}}
+    except requests.RequestException:
+        raise HTTPException(status_code=502, detail="Error al verificar token con Google")
+\end{lstlisting}
+
+\textbf{Paso a paso:}
+\begin{enumerate}
+    \item Recibe el \texttt{id\_token} (el ``pase'' que da Google al frontend).
+    \item Se lo \textbf{envía a Google} para verificarlo (no confiamos a ciegas).
+    \item De la respuesta saca \texttt{email} y \texttt{name}.
+    \item Si el email \textbf{no existe} en la base, \textbf{crea el usuario} automáticamente
+    (rol \texttt{turista}, ya verificado; la contraseña es un valor aleatorio inútil porque
+    el usuario entra solo con Google).
+    \item Crea su token de acceso y lo devuelve con los datos del usuario.
+    \item Si Google no responde (\texttt{requests.RequestException}), \textbf{502}.
+\end{enumerate}
+
+\subsection{La ``máquina del carnet'': \texttt{get\_current\_user} (líneas 162--177)}
+
+\begin{lstlisting}
+def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        email = payload.get("sub")
+        ...
+        user = db.query(User).filter(User.email == email).first()
+        ...
+        return {"id": user.id, "email": user.email, "role": user.role, "approved": user.approved}
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token expirado")
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=401, detail="Token inválido")
+\end{lstlisting}
+
+\textbf{¿Qué es?} Una \textbf{dependencia}: una función que FastAPI ejecuta automáticamente
+para preparar algo antes de llegar a la ruta. Su trabajo: \textbf{leer el token de la
+petición y responder ``¿quién eres?''}.
+
+\textbf{Paso a paso:}
+\begin{enumerate}
+    \item \texttt{Depends(oauth2\_scheme)}: extrae el token del encabezado \texttt{Authorization}.
+    \item \texttt{jwt.decode}: abre y verifica el token con la clave secreta.
+    \item Saca el email (\texttt{sub}).
+    \item Busca al usuario en la base y devuelve sus datos (id, email, rol, aprobación).
+    \item Si el token venció (\texttt{ExpiredSignatureError}) o no es válido
+    (\texttt{InvalidTokenError}), responde \textbf{401}.
+\end{enumerate}
+
+\subsubsection{¿Cómo se usa en las demás rutas?}
+
+Cualquier endpoint que necesite ``quién eres'' escribe:
+
+\begin{lstlisting}
+def mi_endpoint(current_user = Depends(get_current_user), ...):
+    ...
+\end{lstlisting}
+
+FastAPI llama a \texttt{get\_current\_user} primero; si el token no es válido, \textbf{ni
+siquiera ejecuta el endpoint}. Si es válido, le pasa los datos del usuario. Así, \textbf{todos
+los archivos de routes} usan esta misma función para proteger sus rutas.
+
+\subsection{Mi perfil: \texttt{GET /me} (líneas 179--181)}
+
+\begin{lstlisting}
+@router.get("/me")
+def get_me(current_user = Depends(get_current_user)):
+    return current_user
+\end{lstlisting}
+
+Es un endpoint \textbf{protegido}: solo funciona si llevas un token válido. Devuelve tus
+propios datos (id, email, rol, approved). Muy útil para que el frontend sepa ``quién soy''
+cuando la app arranca.
+
+\subsection{Resumen del archivo}
+
+\begin{recuadro}
+\texttt{auth.py} = la \textbf{puerta de entrada}:
+\begin{itemize}
+    \item Encripta contraseñas (hash + salt).
+    \item Crea y verifica tokens JWT (firmados con la clave secreta).
+    \item Endpoints: \texttt{/register}, \texttt{/verify}, \texttt{/resend-code},
+    \texttt{/login}, \texttt{/google}, \texttt{/me}.
+    \item Define \texttt{get\_current\_user}, el ``revisa carnet'' que usan todas las rutas.
+\end{itemize}
+\end{recuadro}
+
+% ============================================================
+\section{\texttt{routes/services.py} --- el CRUD de servicios (93 líneas)}
+
+\subsection{¿Qué hace este archivo?}
+
+Gestiona los \textbf{servicios turísticos}: crearlos, listarlos, buscarlos, editarlos y
+borrarlos. Es el ejemplo \textbf{perfecto de CRUD}:
+\begin{itemize}
+    \item \textbf{C}reate (crear): \texttt{POST /services}
+    \item \textbf{R}ead (leer): \texttt{GET /services} y \texttt{GET /services/\{id\}}
+    \item \textbf{U}pdate (actualizar): \texttt{PUT /services/\{id\}}
+    \item \textbf{D}elete (borrar): \texttt{DELETE /services/\{id\}}
+\end{itemize}
+
+\subsection{La configuración (línea 8)}
+
+\begin{lstlisting}
+router = APIRouter(prefix="/services", tags=["services"])
+\end{lstlisting}
+
+Igual que en \texttt{auth.py}: todas las rutas de aquí empiezan con \texttt{/services}.
+
+\subsection{Crear servicio: \texttt{POST /services} (líneas 10--29)}
+
+\begin{lstlisting}
+@router.post("")
+def create_service(service: ServiceCreate, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+    if current_user["role"] != "prestador":
+        raise HTTPException(status_code=403, detail="Solo prestadores pueden crear servicios")
+    if not current_user.get("approved"):
+        raise HTTPException(status_code=403, detail="Tu cuenta de prestador está pendiente de aprobación...")
+    new_service = Service(
+        provider_id=current_user["id"],
+        type=service.type, name=service.name,
+        description=service.description,
+        price=service.price, location=service.location
+    )
+    db.add(new_service)
+    db.commit()
+    db.refresh(new_service)
+    return new_service
+\end{lstlisting}
+
+\textbf{La novedad: el doble control de permisos.} La función pide
+\texttt{current\_user = Depends(get\_current\_user)} — la ``máquina del carnet'' de
+\texttt{auth.py}. Con los datos del usuario en mano, hace \textbf{dos comprobaciones}:
+
+\begin{enumerate}
+    \item \texttt{current\_user["role"] != "prestador"} $\rightarrow$ si no eres prestador, \textbf{403}.
+    \item \texttt{not current\_user.get("approved")} $\rightarrow$ si eres prestador pero aún no te
+    aprobó el admin, \textbf{403}.
+\end{enumerate}
+
+Luego crea el \texttt{Service} con una pista importante:
+\texttt{provider\_id=current\_user["id"]}. \textbf{El dueño no lo elige el cliente}: el sistema
+toma tu id del token. (Recuerda: en \texttt{schemas/service.py} el \texttt{provider\_id} no
+estaba en el formulario. ¡Aquí se explica el porqué!)
+
+\texttt{db.refresh(new\_service)}: recarga el objeto desde la base para tener los valores que
+la base asignó (como el \texttt{id} autogenerado).
+
+\subsection{Listar y buscar: \texttt{GET /services} (líneas 31--56)}
+
+\begin{lstlisting}
+@router.get("")
+def get_services(
+    db: Session = Depends(get_db),
+    type: str = Query(None, description="Filtrar por tipo: guia, hotel"),
+    location: str = Query(None, description="Filtrar por ubicación"),
+    min_price: float = Query(None, ...),
+    max_price: float = Query(None, ...),
+    min_rating: float = Query(None, ...),
+    available: bool = Query(None, ...)
+):
+    query = db.query(Service)
+    if type:
+        query = query.filter(Service.type == type)
+    if location:
+        query = query.filter(Service.location.ilike(f"%{location}%"))
+    if min_price is not None:
+        query = query.filter(Service.price >= min_price)
+    ...
+    return query.all()
+\end{lstlisting}
+
+\textbf{La novedad: los parámetros \texttt{Query}.} Estos son \textbf{filtros opcionales} que el
+frontend manda en la URL. Por ejemplo:
+
+\begin{center}
+\colorbox{fondocodigo}{\parbox{0.92\textwidth}{\ttfamily\small
+GET /services?type=hotel\&min\_price=50\&location=Lima
+}}
+\end{center}
+
+\texttt{Query(None, ...)} significa: ``parámetro \textbf{opcional}; si no viene, vale
+\texttt{None}''.
+
+\textbf{El ``filtro inteligente'':} el código empieza con \texttt{query = db.query(Service)}
+(todos los servicios) y va \textbf{afinando con cada filtro} que venga:
+
+\begin{itemize}
+    \item \texttt{Service.type == type}: tipo exacto.
+    \item \texttt{Service.location.ilike("\%ubicacion\%")}: busca que la ubicación
+    \textbf{contenga} ese texto. \texttt{ilike} = \emph{case-insensitive} (no distingue
+    mayúsculas/minúsculas) + \textbf{búsqueda parcial} gracias a los \texttt{\%...\%}.
+    \item \texttt{Service.price >= min\_price}: precio mínimo.
+    \item \texttt{Service.price <= max\_price}: precio máximo.
+    \item \texttt{Service.rating >= min\_rating}: calificación mínima.
+    \item \texttt{Service.available == available}: si está disponible.
+\end{itemize}
+
+\texttt{query.all()} al final ejecuta y devuelve \textbf{todos los que pasaron los filtros}.
+
+\begin{analogia}
+Es como el \textbf{filtro de una tienda online}: vas marcando ``tipo, precio máximo,
+ubicación'' y la lista se va achicando. Cada \texttt{filter} agrega una condición.
+\end{analogia}
+
+\subsection{Ver un servicio: \texttt{GET /services/\{id\}} (líneas 58--63)}
+
+\begin{lstlisting}
+@router.get("/{service_id}")
+def get_service(service_id: int, db: Session = Depends(get_db)):
+    service = db.query(Service).filter(Service.id == service_id).first()
+    if not service:
+        raise HTTPException(status_code=404, detail="Servicio no encontrado")
+    return service
+\end{lstlisting}
+
+\textbf{La novedad: el \texttt{\{service\_id\}} en la URL} (parámetro de ruta). Cuando el frontend
+pide \texttt{GET /services/5}, FastAPI captura el \texttt{5} y lo pasa como \texttt{service\_id}.
+Si no existe ese servicio, responde \textbf{404}.
+
+\subsection{Actualizar: \texttt{PUT /services/\{id\}} (líneas 65--80)}
+
+\begin{lstlisting}
+@router.put("/{service_id}")
+def update_service(service_id: int, service_data: ServiceUpdate, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+    service = db.query(Service).filter(Service.id == service_id).first()
+    if not service:
+        raise HTTPException(status_code=404, detail="Servicio no encontrado")
+    if service.provider_id != current_user["id"]:
+        raise HTTPException(status_code=403, detail="Solo el prestador puede modificar su servicio")
+    update_data = service_data.dict(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(service, key, value)
+    db.commit()
+    db.refresh(service)
+    return service
+\end{lstlisting}
+
+\textbf{Paso a paso:}
+\begin{enumerate}
+    \item Busca el servicio; si no existe, \textbf{404}.
+    \item Comprueba que \textbf{tú seas el dueño}: \texttt{service.provider\_id != current\_user["id"]}
+    $\rightarrow$ \textbf{403}. (¡Otro uso de la máquina del carnet!)
+    \item \texttt{service\_data.dict(exclude\_unset=True)}: convierte el formulario \texttt{ServiceUpdate}
+    a diccionario, pero \textbf{solo con los campos que el cliente envió}. Los que no llegaron,
+    \textbf{no se tocan} (¡la magia del \texttt{Optional} que vimos en schemas!).
+    \item \texttt{setattr(service, key, value)}: por cada campo, lo \textbf{asigna} al objeto del modelo.
+    \item \texttt{db.commit()}: guarda los cambios.
+\end{enumerate}
+
+\begin{analogia}
+\texttt{exclude\_unset=True} es como decirle al empleado: ``solo cambia lo que vienen a
+cambiar''. Si el cliente solo envió \texttt{price}, solo se modifica \texttt{price};
+el nombre y la ubicación quedan intactos.
+\end{analogia}
+
+\subsection{Borrar: \texttt{DELETE /services/\{id\}} (líneas 82--93)}
+
+\begin{lstlisting}
+@router.delete("/{service_id}")
+def delete_service(service_id: int, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+    service = db.query(Service).filter(Service.id == service_id).first()
+    if not service:
+        raise HTTPException(status_code=404, detail="Servicio no encontrado")
+    if service.provider_id != current_user["id"]:
+        raise HTTPException(status_code=403, detail="Solo el prestador puede eliminar su servicio")
+    db.delete(service)
+    db.commit()
+    return {"message": "Servicio eliminado"}
+\end{lstlisting}
+
+Misma estructura: buscar (404 si no existe), verificar dueño (403 si no eres tú),
+\texttt{db.delete} + \texttt{db.commit} y mensaje de confirmación.
+
+\subsection{Los métodos HTTP que ya conocemos}
+
+\begin{center}
+{\small
+\setlength{\tabcolsep}{4pt}
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{3.2cm}>{\raggedright\arraybackslash}p{4.2cm}>{\raggedright\arraybackslash}p{7.5cm}@{}}
+\toprule
+\textbf{Método} & \textbf{Acción} & \textbf{Analogía} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Método} & \textbf{Acción} & \textbf{Analogía} \\
+\midrule
+\endhead
+\texttt{POST} & Crear & Añadir un registro nuevo \\
+\texttt{GET} & Leer & Consultar sin cambiar nada \\
+\texttt{PUT} & Actualizar & Modificar uno existente \\
+\texttt{DELETE} & Borrar & Eliminar uno existente \\
+\bottomrule
+\end{longtable}
+}
+\end{center}
+
+\begin{recuadro}
+\texttt{services.py} = \textbf{CRUD completo} + \textbf{permisos}. Aprende este patrón:
+buscar, comprobar permisos, actuar, guardar. Es el molde que usan \texttt{bookings.py},
+\texttt{itineraries.py}, \texttt{messages.py} y \texttt{reviews.py}.
+\end{recuadro}
+
+% ============================================================
+\section{\texttt{routes/bookings.py} --- las reservas (77 líneas)}
+
+\subsection{¿Qué hace este archivo?}
+
+Gestiona las \textbf{reservas}: crear, listar las propias, ver una y cambiar su estado.
+Es el ejemplo perfecto de \textbf{permisos por rol}, porque aquí conviven turistas y prestadores.
+
+\subsection{Crear reserva: \texttt{POST /bookings} (líneas 11--32)}
+
+\begin{lstlisting}
+@router.post("")
+def create_booking(booking: BookingCreate, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+    if current_user["role"] != "turista":
+        raise HTTPException(status_code=403, detail="Solo turistas pueden reservar")
+    service = db.query(Service).filter(Service.id == booking.service_id).first()
+    if not service:
+        raise HTTPException(status_code=404, detail="Servicio no encontrado")
+    if not service.available:
+        raise HTTPException(status_code=400, detail="El servicio no está disponible")
+    new_booking = Booking(
+        tourist_id=current_user["id"],
+        service_id=booking.service_id,
+        date=booking.date,
+        total=service.price
+    )
+    db.add(new_booking)
+    db.commit()
+    db.refresh(new_booking)
+    return new_booking
+\end{lstlisting}
+
+\textbf{Paso a paso:}
+\begin{enumerate}
+    \item \textbf{Solo turistas} pueden reservar (rol $\neq$ \texttt{turista} $\rightarrow$ \textbf{403}).
+    \item Busca el \textbf{servicio} que se quiere reservar. Si no existe, \textbf{404}.
+    \item Comprueba que el servicio esté \textbf{disponible}. Si no, \textbf{400}.
+    \item Crea la reserva con:
+    \begin{itemize}
+        \item \texttt{tourist\_id=current\_user["id"]}: el turista eres tú (del token).
+        \item \texttt{service\_id} y \texttt{date}: del formulario \texttt{BookingCreate}.
+        \item \texttt{total=service.price}: \textbf{el precio lo toma del servicio}. ¡El cliente
+        no escribe el total! (Recuerda el schema \texttt{BookingCreate}: solo enviaba
+        \texttt{service\_id} y \texttt{date}. Aquí se ve el porqué: \textbf{el servidor calcula el precio}.)
+    \end{itemize}
+    \item Guarda, refresca y devuelve.
+\end{enumerate}
+
+\subsection{Listar reservas: \texttt{GET /bookings} (líneas 34--42)}
+
+\begin{lstlisting}
+@router.get("")
+def get_bookings(db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+    if current_user["role"] == "turista":
+        return db.query(Booking).filter(Booking.tourist_id == current_user["id"]).all()
+    elif current_user["role"] == "prestador":
+        services = db.query(Service).filter(Service.provider_id == current_user["id"]).all()
+        service_ids = [s.id for s in services]
+        return db.query(Booking).filter(Booking.service_id.in_(service_ids)).all()
+    return []
+\end{lstlisting}
+
+\textbf{La idea: cada uno ve SOLO lo suyo.} La respuesta depende del rol:
+
+\begin{itemize}
+    \item \textbf{Turista}: ve las reservas donde él es el \texttt{tourist\_id}.
+    \item \textbf{Prestador}: primero busca \textbf{sus servicios} (los que él creó), junta sus ids
+    en una lista, y luego ve las reservas de \textbf{esos servicios}. No puede ver reservas de
+    servicios ajenos.
+    \item \textbf{Otro rol}: lista vacía.
+\end{itemize}
+
+\subsubsection{La novedad: \texttt{Booking.service\_id.in\_(service\_ids)}}
+
+\texttt{.in\_(lista)} es ``\textbf{que el valor esté dentro de la lista}''. En español: ``dame las
+reservas cuyo \texttt{service\_id} esté entre \texttt{[10, 15, 22, ...]}''. Equivale a
+\texttt{WHERE service\_id IN (10, 15, 22, ...)} en SQL.
+
+\begin{analogia}
+Es como preguntar en la oficina: ``¿hay algún paquete para las oficinas 10, 15 o 22?''
+(en vez de preguntar una por una).
+\end{analogia}
+
+\subsection{Ver una reserva: \texttt{GET /bookings/\{id\}} (líneas 44--54)}
+
+\begin{lstlisting}
+@router.get("/{booking_id}")
+def get_booking(booking_id: int, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+    booking = db.query(Booking).filter(Booking.id == booking_id).first()
+    if not booking:
+        raise HTTPException(status_code=404, detail="Reserva no encontrada")
+    service = db.query(Service).filter(Service.id == booking.service_id).first()
+    if current_user["id"] != booking.tourist_id and current_user["id"] != service.provider_id:
+        raise HTTPException(status_code=403, detail="No autorizado")
+    return booking
+\end{lstlisting}
+
+\textbf{El control de acceso ``o el turista o el prestador''.} Para ver una reserva, debes ser
+\textbf{el turista que la hizo} \textbf{O} \textbf{el prestador del servicio}:
+\begin{itemize}
+    \item \texttt{current\_user["id"] != booking.tourist\_id} $\rightarrow$ no eres el turista.
+    \item \texttt{and} \texttt{current\_user["id"] != service.provider\_id} $\rightarrow$ y tampoco eres el prestador.
+    \item Si ambas se cumplen, \textbf{403}.
+\end{itemize}
+
+Para saber el prestador, primero busca el servicio de esa reserva. Es otra muestra de
+\textbf{cómo se conectan las tablas} (booking $\rightarrow$ service $\rightarrow$ provider).
+
+\subsection{Cambiar estado: \texttt{PUT /bookings/\{id\}/status} (líneas 56--77)}
+
+\begin{lstlisting}
+@router.put("/{booking_id}/status")
+def update_booking_status(booking_id: int, status_data: BookingStatusUpdate, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+    booking = db.query(Booking).filter(Booking.id == booking_id).first()
+    if not booking:
+        raise HTTPException(status_code=404, detail="Reserva no encontrada")
+    service = db.query(Service).filter(Service.id == booking.service_id).first()
+
+    if current_user["role"] == "prestador" and current_user["id"] == service.provider_id:
+        if status_data.status not in ["confirmada", "cancelada"]:
+            raise HTTPException(status_code=400, detail="Estado inválido")
+    elif current_user["role"] == "turista" and current_user["id"] == booking.tourist_id:
+        if status_data.status != "cancelada":
+            raise HTTPException(status_code=400, detail="El turista solo puede cancelar reservas")
+    else:
+        raise HTTPException(status_code=403, detail="No autorizado")
+
+    booking.status = status_data.status
+    db.commit()
+    db.refresh(booking)
+    return booking
+\end{lstlisting}
+
+\textbf{¿Qué puede hacer cada quién?} ¡Reglas de negocio distintas por rol!
+
+\begin{center}
+{\small
+\setlength{\tabcolsep}{4pt}
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{3.4cm}>{\raggedright\arraybackslash}p{6.2cm}>{\raggedright\arraybackslash}p{5.3cm}@{}}
+\toprule
+\textbf{Rol} & \textbf{Puede poner} & \textbf{No puede poner} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Rol} & \textbf{Puede poner} & \textbf{No puede poner} \\
+\midrule
+\endhead
+Prestador (dueño del servicio) & \texttt{confirmada} o \texttt{cancelada} & Cualquier otro estado (\textbf{400}) \\
+Turista (dueño de la reserva) & Solo \texttt{cancelada} & Confirmar (\textbf{400}) \\
+Cualquier otro & Nada & \textbf{403} \\
+\bottomrule
+\end{longtable}
+}
+\end{center}
+
+\textbf{Paso a paso:}
+\begin{enumerate}
+    \item Busca la reserva; si no existe, \textbf{404}.
+    \item Busca el servicio para conocer al prestador.
+    \item \textbf{if / elif / else} según el rol:
+    \begin{itemize}
+        \item Si eres el prestador dueño: solo acepta \texttt{confirmada}/\texttt{cancelada}.
+        \item Si eres el turista dueño: solo \texttt{cancelada} (no puede confirmar su propia reserva).
+        \item Si no eres ninguno de los dos: \textbf{403}.
+    \end{itemize}
+    \item Si pasó las reglas, asigna el estado, guarda y devuelve.
+\end{enumerate}
+
+\textbf{¿Por qué el turista solo puede cancelar?} Es una \textbf{regla de negocio}: confirmar una
+reserva lo decide el prestador (acepta al turista). El turista solo tiene poder para \textbf{retirarse}
+(cancelar). Así el sistema protege el flujo del negocio, no solo la seguridad.
+
+\begin{recuadro}
+\texttt{bookings.py} = \textbf{permisos por rol} + \textbf{conexión entre tablas}. Cada quien ve
+solo lo suyo; cada rol solo puede hacer ciertas acciones (turista cancela, prestador confirma).
+\end{recuadro}
+
+% ============================================================
+\section{\texttt{routes/itineraries.py} --- los planes de viaje (131 líneas)}
+
+\subsection{¿Qué hace este archivo?}
+
+Gestiona los \textbf{itinerarios} del turista: CRUD del plan, \textbf{agregar/quitar reservas} al
+plan, listar las reservas del plan (junto con datos del servicio) y \textbf{calcular rutas}
+con Google Maps.
+
+Es el archivo que más muestra el poder de la \textbf{columna JSON} del modelo \texttt{Itinerary}.
+
+\subsection{CRUD básico (líneas 13--60)}
+
+\begin{lstlisting}
+@router.post("")
+def create_itinerary(itinerary: ItineraryCreate, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+    if current_user["role"] != "turista":
+        raise HTTPException(status_code=403, detail="Solo turistas pueden crear itinerarios")
+    new_itinerary = Itinerary(
+        tourist_id=current_user["id"],
+        day=itinerary.day,
+        route_data=itinerary.route_data
+    )
+    db.add(new_itinerary); db.commit(); db.refresh(new_itinerary)
+    return new_itinerary
+\end{lstlisting}
+
+Es el mismo patrón que ya conocemos, pero \textbf{solo para turistas}:
+\begin{itemize}
+    \item \texttt{POST /itineraries}: crear (rol \texttt{turista} obligatorio).
+    \item \texttt{GET /itineraries}: listar \textbf{mis} itinerarios (\texttt{tourist\_id == yo}).
+    \item \texttt{GET /itineraries/\{id\}}: ver uno (si es tuyo, si no \textbf{403}).
+    \item \texttt{PUT /itineraries/\{id\}}: actualizar la \texttt{route\_data}.
+    \item \texttt{DELETE /itineraries/\{id\}}: borrar (si es tuyo).
+\end{itemize}
+
+No hay nada nuevo aquí: es el molde ``buscar, verificar dueño, actuar'' que ya dominamos.
+Lo interesante viene en las rutas que siguen.
+
+\subsection{Agregar una reserva al plan (líneas 62--79)}
+
+\begin{lstlisting}
+@router.post("/{itinerary_id}/add-booking/{booking_id}")
+def add_booking_to_itinerary(itinerary_id: int, booking_id: int, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+    itinerary = db.query(Itinerary).filter(Itinerary.id == itinerary_id).first()
+    if not itinerary:
+        raise HTTPException(status_code=404, detail="Itinerario no encontrado")
+    if itinerary.tourist_id != current_user["id"]:
+        raise HTTPException(status_code=403, detail="No autorizado")
+    booking = db.query(Booking).filter(Booking.id == booking_id).first()
+    if not booking:
+        raise HTTPException(status_code=404, detail="Reserva no encontrada")
+    if booking.tourist_id != current_user["id"]:
+        raise HTTPException(status_code=403, detail="No autorizado")
+    if "booking_ids" not in itinerary.route_data:
+        itinerary.route_data["booking_ids"] = []
+    if booking_id not in itinerary.route_data["booking_ids"]:
+        itinerary.route_data["booking_ids"].append(booking_id)
+    db.commit()
+    return {"message": "Reserva agregada al itinerario"}
+\end{lstlisting}
+
+\textbf{La novedad: dos ids en la URL} (\texttt{\{itinerary\_id\}/add-booking/\{booking\_id\}}).
+Una URL con \textbf{dos parámetros de ruta}.
+
+\textbf{Los controles (los más estrictos del archivo):}
+\begin{enumerate}
+    \item El itinerario debe existir (\textbf{404}) y ser \textbf{tuyo} (\textbf{403}).
+    \item La reserva debe existir (\textbf{404}) y ser \textbf{tuya} (\textbf{403}).
+    \item Solo así puedes \textbf{agregar tu reserva a tu itinerario}.
+\end{enumerate}
+
+\textbf{La magia del JSON (líneas 74--77):} aquí se manipula la columna
+\texttt{route\_data} \textbf{como un diccionario de Python}:
+\begin{enumerate}
+    \item Si \texttt{route\_data} no tiene la clave \texttt{"booking\_ids"}, la crea con una lista vacía.
+    \item Si la reserva \textbf{no está} en la lista, la \textbf{agrega} (sin duplicados).
+    \item \texttt{db.commit()} guarda el JSON modificado.
+\end{enumerate}
+
+\begin{analogia}
+Es como escribir en tu \textbf{agenda de viaje}: abres la página del día (itinerario) y
+anotas el número del boleto (reserva) en la lista de ese día. Si ya estaba anotado, no lo repites.
+\end{analogia}
+
+\subsection{Quitar una reserva: \texttt{POST /itineraries/\{id\}/remove-booking/\{booking\_id\}} (líneas 81--91)}
+
+Es el espejo del anterior: verifica que \texttt{booking\_ids} exista y que la reserva esté
+dentro, y la \textbf{elimina} de la lista con \texttt{.remove(booking\_id)}. Guarda y confirma.
+
+\subsection{Listar las reservas del plan: \texttt{GET /itineraries/\{id\}/bookings} (líneas 93--117)}
+
+\begin{lstlisting}
+@router.get("/{itinerary_id}/bookings")
+def get_itinerary_bookings(itinerary_id: int, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+    itinerary = db.query(Itinerary).filter(Itinerary.id == itinerary_id).first()
+    ...
+    booking_ids = (itinerary.route_data or {}).get("booking_ids", [])
+    if not booking_ids:
+        return []
+    bookings = db.query(Booking).filter(Booking.id.in_(booking_ids)).all()
+    result = []
+    for b in bookings:
+        service = db.query(Service).filter(Service.id == b.service_id).first()
+        result.append({
+            "id": b.id, "service_id": b.service_id,
+            "service_name": service.name if service else "Desconocido",
+            "service_type": service.type if service else "",
+            "service_location": service.location if service else "",
+            "date": str(b.date), "status": b.status, "total": b.total
+        })
+    return result
+\end{lstlisting}
+
+\textbf{Paso a paso:}
+\begin{enumerate}
+    \item Verifica que el itinerario exista y sea tuyo.
+    \item \texttt{(itinerary.route\_data or \{\}).get("booking\_ids", [])}: lee la lista de ids
+    de reservas del JSON. Si \texttt{route\_data} es \texttt{None} o no tiene la clave, usa
+    lista vacía (\texttt{or \{\}} y \texttt{get(...)} con valor por defecto = ``plan seguro'').
+    \item Si no hay reservas, devuelve lista vacía.
+    \item Busca \textbf{todas las reservas} con esos ids de una vez (\texttt{.in\_()}).
+    \item Para cada reserva, busca \textbf{su servicio} y arma un diccionario \textbf{combinado}
+    con datos de ambas tablas.
+\end{enumerate}
+
+\subsubsection{El ``join'' a mano (la idea importante)}
+
+Este código hace algo que en SQL se llama \textbf{JOIN} (unir tablas): junta la información de
+\texttt{bookings} (fecha, estado, total) con la de \texttt{services} (nombre, tipo, ubicación)
+para darle al frontend una \textbf{respuesta lista para mostrar}.
+
+\textbf{¿Por qué a mano y no con SQL?} Es más fácil de leer y controlar para un proyecto chico.
+En sistemas grandes, SQLAlchemy tiene herramientas para hacer joins automáticos, pero aquí se
+hace explícito: \textbf{un bucle + una búsqueda por cada reserva}.
+
+\subsection{Calcular rutas: \texttt{POST /itineraries/\{id\}/directions} (líneas 119--131)}
+
+\begin{lstlisting}
+@router.post("/{itinerary_id}/directions")
+def calculate_directions(itinerary_id: int, req: DirectionsRequest, current_user = Depends(get_current_user)):
+    itinerary = db.query(Itinerary).filter(Itinerary.id == itinerary_id).first()
+    if not itinerary or itinerary.tourist_id != current_user["id"]:
+        raise HTTPException(status_code=403, detail="No autorizado")
+    result = get_directions(
+        origin_lat=req.origin.lat,
+        origin_lng=req.origin.lng,
+        dest_lat=req.destination.lat,
+        dest_lng=req.destination.lng,
+        waypoints=[{"lat": w.lat, "lng": w.lng, "name": w.name} for w in req.waypoints]
+    )
+    return result
+\end{lstlisting}
+
+\textbf{La conexión con el mapa.} Esta ruta:
+\begin{enumerate}
+    \item Verifica que el itinerario sea tuyo (\textbf{403} si no).
+    \item Recibe el \texttt{DirectionsRequest} (el formulario anidado de
+    \texttt{schemas/itinerary.py}: \texttt{origin}, \texttt{destination}, \texttt{waypoints}).
+    \item \textbf{Extrae} los datos de cada punto (lat, lng, name) y se los pasa a
+    \texttt{get\_directions} de \texttt{maps\_utils.py}.
+    \item Devuelve lo que \texttt{get\_directions} calcule (la plantilla
+    \texttt{DirectionsResponse} que vimos en schemas).
+\end{enumerate}
+
+\textbf{¿Quién es \texttt{get\_directions}?} Es una función de \texttt{maps\_utils.py} que aún no
+hemos visto, pero ya sabes su trabajo: \textbf{hablar con Google Maps} para calcular la ruta
+entre los puntos. Lo veremos pronto.
+
+\begin{recuadro}
+\texttt{itineraries.py} = CRUD del plan + \textbf{manipular el JSON} (agregar/quitar reservas)
++ \textbf{join a mano} (reservas con sus servicios) + \textbf{puente a Google Maps}
+(\texttt{get\_directions}).
+\end{recuadro}
+
+% ============================================================
+\section{\texttt{routes/messages.py} --- los mensajes HTTP (47 líneas)}
+
+\subsection{¿Qué hace este archivo?}
+
+Gestiona los mensajes \textbf{por HTTP} (peticiones normales). Recuerda que el chat en tiempo
+real vivía en \texttt{ws.py} (WebSockets); este archivo es la \textbf{versión clásica}:
+enviar un mensaje y leer el historial de una reserva.
+
+\subsection{Enviar mensaje: \texttt{POST /messages} (líneas 12--32)}
+
+\begin{lstlisting}
+@router.post("/")
+def send_message(message: MessageCreate, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+    booking = db.query(Booking).filter(Booking.id == message.booking_id).first()
+    if not booking:
+        raise HTTPException(status_code=404, detail="Reserva no encontrada")
+    service = db.query(Service).filter(Service.id == booking.service_id).first()
+    if current_user["id"] != booking.tourist_id and current_user["id"] != service.provider_id:
+        raise HTTPException(status_code=403, detail="No autorizado")
+    new_message = Message(
+        sender_id=current_user["id"],
+        receiver_id=message.receiver_id,
+        booking_id=message.booking_id,
+        content=message.content
+    )
+    db.add(new_message); db.commit(); db.refresh(new_message)
+    return new_message
+\end{lstlisting}
+
+\textbf{Paso a paso:}
+\begin{enumerate}
+    \item Recibe \texttt{MessageCreate} (los 3 campos que vimos: \texttt{receiver\_id},
+    \texttt{booking\_id}, \texttt{content}).
+    \item Busca la \textbf{reserva}; si no existe, \textbf{404}.
+    \item \textbf{Control de acceso}: solo el turista de la reserva \textbf{o} el prestador del
+    servicio pueden escribir. (Igual que en \texttt{bookings.py}.) Si no, \textbf{403}.
+    \item Crea el \texttt{Message} con \texttt{sender\_id=current\_user["id"]}: \textbf{el remitente
+    lo pone el sistema}, no el cliente. (¡El formulario no incluía \texttt{sender\_id} por eso!)
+    \item Guarda, refresca y devuelve.
+\end{enumerate}
+
+\subsection{Leer el historial: \texttt{GET /messages/booking/\{booking\_id\}} (líneas 34--47)}
+
+\begin{lstlisting}
+@router.get("/booking/{booking_id}")
+def get_messages(booking_id: int, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+    booking = db.query(Booking).filter(Booking.id == booking_id).first()
+    if not booking:
+        raise HTTPException(status_code=404, detail="Reserva no encontrada")
+    service = db.query(Service).filter(Service.id == booking.service_id).first()
+    if current_user["id"] not in [booking.tourist_id, service.provider_id]:
+        raise HTTPException(status_code=403, detail="No autorizado")
+    messages = db.query(Message).filter(Message.booking_id == booking_id).order_by(Message.timestamp).all()
+    return messages
+\end{lstlisting}
+
+\textbf{Paso a paso:}
+\begin{enumerate}
+    \item Busca la reserva (\textbf{404} si no existe).
+    \item \textbf{Control de acceso} con una variante elegante:
+    \texttt{current\_user["id"] not in [booking.tourist\_id, service.provider\_id]} $\rightarrow$
+    ``¿eres el turista \textbf{o} el prestador?'' Si no, \textbf{403}.
+    \item Busca los mensajes de esa reserva y los \textbf{ordena por fecha} con
+    \texttt{order\_by} sobre \texttt{Message.timestamp}: así el historial sale en orden cronológico.
+\end{enumerate}
+
+\subsubsection{La novedad: \texttt{order\_by}}
+
+\texttt{db.query(...).order\_by(Message.timestamp)} = ``devuélveme los mensajes \textbf{ordenados}
+de menor a mayor fecha'' (del más antiguo al más nuevo). El frontend los muestra tal cual,
+sin tener que ordenarlos él.
+
+\subsection{Mensajes HTTP vs WebSockets (recapitulemos)}
+
+\begin{center}
+{\small
+\setlength{\tabcolsep}{4pt}
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{4cm}>{\raggedright\arraybackslash}p{5.5cm}>{\raggedright\arraybackslash}p{5.4cm}@{}}
+\toprule
+\textbf{Aspecto} & \textbf{HTTP (\texttt{messages.py})} & \textbf{WebSocket (\texttt{ws.py})} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Aspecto} & \textbf{HTTP (\texttt{messages.py})} & \textbf{WebSocket (\texttt{ws.py})} \\
+\midrule
+\endhead
+Conexión & Se abre y cierra en cada petición & Se mantiene abierta (tiempo real) \\
+Uso & Enviar un mensaje, leer historial & Chat en vivo, notificaciones al instante \\
+Modelo de datos & Mismo \texttt{Message} & Mismo \texttt{Message} \\
+Guardado & En la base de datos & En la base de datos \\
+\bottomrule
+\end{longtable}
+}
+\end{center}
+
+Ambos comparten el mismo modelo \texttt{Message} y guardan en la misma tabla. La diferencia es
+\textbf{cómo viaja la información}: HTTP es ``pide y responde''; WebSocket es ``canal abierto''.
+
+\begin{recuadro}
+\texttt{messages.py} = la versión \textbf{HTTP} del chat. Control de acceso (turista o prestador),
+\texttt{sender\_id} lo pone el sistema, e historial \textbf{ordenado por fecha}.
+\end{recuadro}
+
+% ============================================================
+\section{\texttt{routes/reviews.py} --- las calificaciones (59 líneas)}
+
+\subsection{¿Qué hace este archivo?}
+
+Gestiona las reseñas con \textbf{3 reglas de negocio} muy típicas:
+\begin{enumerate}
+    \item Solo quien \textbf{viajó de verdad} puede calificar (reserva \textbf{confirmada}).
+    \item \textbf{Una reserva = una calificación} (no se puede calificar dos veces).
+    \item La nota debe estar \textbf{entre 1 y 5}.
+\end{enumerate}
+Y además, al calificar, \textbf{actualiza el rating del servicio} (el promedio).
+
+\subsection{Crear reseña: \texttt{POST /reviews} (líneas 13--50)}
+
+\begin{lstlisting}
+@router.post("/")
+def create_review(review: ReviewCreate, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+    if current_user["role"] != "turista":
+        raise HTTPException(status_code=403, detail="Solo turistas pueden calificar")
+    booking = db.query(Booking).filter(Booking.id == review.booking_id).first()
+    if not booking:
+        raise HTTPException(status_code=404, detail="Reserva no encontrada")
+    if booking.tourist_id != current_user["id"]:
+        raise HTTPException(status_code=403, detail="No autorizado")
+    if booking.status != "confirmada":
+        raise HTTPException(status_code=400, detail="Solo se puede calificar una reserva confirmada")
+    existing = db.query(Review).filter(Review.booking_id == review.booking_id).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="Ya calificaste esta reserva")
+    if review.rating < 1 or review.rating > 5:
+        raise HTTPException(status_code=400, detail="La calificación debe ser entre 1 y 5")
+    new_review = Review(
+        booking_id=review.booking_id,
+        tourist_id=current_user["id"],
+        service_id=booking.service_id,
+        rating=review.rating,
+        comment=review.comment
+    )
+    db.add(new_review); db.commit(); db.refresh(new_review)
+    avg_rating = db.query(func.avg(Review.rating)).filter(Review.service_id == booking.service_id).scalar()
+    service = db.query(Service).filter(Service.id == booking.service_id).first()
+    service.rating = round(avg_rating, 2)
+    db.commit()
+    return new_review
+\end{lstlisting}
+
+\subsubsection{La escalera de validaciones}
+
+La función se puede leer como una \textbf{escalera}: sube de a un escalón, y si algo falla,
+lanza al usuario con el código adecuado:
+\begin{itemize}
+    \item \textbf{403} ¿No eres turista? No puedes calificar.
+    \item \textbf{404} ¿La reserva no existe? No hay nada que calificar.
+    \item \textbf{403} ¿La reserva no es tuya? No puedes calificar reservas ajenas.
+    \item \textbf{400} ¿La reserva no está \texttt{confirmada}? Solo se califica un viaje hecho.
+    \item \textbf{400} ¿Ya calificaste esa reserva? Una reseña por reserva.
+    \item \textbf{400} ¿La nota no está entre 1 y 5? Fuera de rango.
+\end{itemize}
+Cuando la escalera termina sin caídas, la reseña se guarda.
+
+\subsubsection{Actualizar el promedio (líneas 45--48): la parte especial}
+
+\begin{lstlisting}
+avg_rating = db.query(func.avg(Review.rating)).filter(Review.service_id == booking.service_id).scalar()
+service = db.query(Service).filter(Service.id == booking.service_id).first()
+service.rating = round(avg_rating, 2)
+db.commit()
+\end{lstlisting}
+
+\textbf{La novedad: \texttt{func.avg} y \texttt{.scalar()}.}
+\begin{itemize}
+    \item \texttt{func.avg(Review.rating)} = ``\textbf{calcular el promedio}'' de la columna
+    \texttt{rating} de las reseñas. (SQL \texttt{AVG}.)
+    \item \texttt{.scalar()} = ``dame el resultado como un número \textbf{único}'' (el promedio),
+    en vez de una fila completa.
+    \item Luego se \textbf{guarda} ese promedio redondeado en la columna \texttt{rating} del
+    servicio.
+\end{itemize}
+
+\begin{analogia}
+Calificar es como \textbf{votar por una app}: cada vez que llega un voto nuevo, la app
+recalcula el promedio de estrellas y lo actualiza en la ficha del servicio.
+\end{analogia}
+
+\subsection{Ver reseñas de un servicio: \texttt{GET /reviews/service/\{service\_id\}} (líneas 52--55)}
+
+\begin{lstlisting}
+@router.get("/service/{service_id}")
+def get_service_reviews(service_id: int, db: Session = Depends(get_db)):
+    reviews = db.query(Review).filter(Review.service_id == service_id).order_by(Review.created_at.desc()).all()
+    return reviews
+\end{lstlisting}
+
+Novedad pequeña: \texttt{order\_by(Review.created\_at.desc())}. El \texttt{.desc()} significa
+\textbf{descendente}: las reseñas más \textbf{nuevas primero} (en \texttt{messages.py} era
+ascendente por defecto, aquí lo invertimos para que el cliente vea lo último arriba).
+No pide login (\textbf{público}): cualquiera puede leer las reseñas de un servicio.
+
+\subsection{Ver mis reseñas: \texttt{GET /reviews/my} (líneas 57--59)}
+
+\begin{lstlisting}
+@router.get("/my")
+def get_my_reviews(db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+    return db.query(Review).filter(Review.tourist_id == current_user["id"]).all()
+\end{lstlisting}
+
+Consulta directa: ``dame todas las reseñas donde el turista soy yo''. Sin validaciones extra,
+porque solo filtra por tu propio id.
+
+\begin{recuadro}
+\texttt{reviews.py} = \textbf{reglas de negocio en cascada} (rol, dueño, estado, duplicado, rango)
++ \textbf{promedio automático} con \texttt{func.avg} + actualización del \texttt{rating} del servicio.
+\end{recuadro}
+
+% ============================================================
+\section{\texttt{routes/costs.py} --- el calculador de costos (47 líneas)}
+
+\subsection{¿Qué hace este archivo?}
+
+Es un \textbf{calculador}: recibe un grupo de reservas del turista y devuelve el \textbf{total}
+del viaje, el \textbf{desglose por categoría} (guía, hotel, etc.) y el \textbf{detalle} de cada
+reserva. \textbf{No guarda nada} en la base: es una función pura de cálculo que solo lee datos.
+
+\subsection{El cálculo: \texttt{POST /costs/calculate} (líneas 11--47)}
+
+\begin{lstlisting}
+@router.post("/calculate")
+def calculate_costs(body: CostCalculateRequest, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+    booking_ids = body.booking_ids
+    total = 0.0
+    breakdown = {"guia": 0.0, "hotel": 0.0}
+    details = []
+    for booking_id in booking_ids:
+        booking = db.query(Booking).filter(Booking.id == booking_id).first()
+        if not booking:
+            continue
+        if booking.tourist_id != current_user["id"]:
+            continue
+        service = db.query(Service).filter(Service.id == booking.service_id).first()
+        if not service:
+            continue
+        category = service.type
+        if category not in breakdown:
+            breakdown[category] = 0.0
+        breakdown[category] += booking.total
+        total += booking.total
+        details.append({
+            "booking_id": booking.id,
+            "service_name": service.name,
+            "category": category,
+            "price": booking.total
+        })
+    return {
+        "total": round(total, 2),
+        "breakdown": {k: round(v, 2) for k, v in breakdown.items() if v > 0},
+        "details": details
+    }
+\end{lstlisting}
+
+\subsubsection{Las tres partes del resultado}
+
+\begin{center}
+{\small
+\setlength{\tabcolsep}{4pt}
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{3.2cm}>{\raggedright\arraybackslash}p{11.5cm}@{}}
+\toprule
+\textbf{Parte} & \textbf{Qué es} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Parte} & \textbf{Qué es} \\
+\midrule
+\endhead
+\texttt{total} & La \textbf{suma de todo}: cada reserva de la lista, su \texttt{total}. \\
+\texttt{breakdown} & El total \textbf{por categoría} (guía, hotel, restaurante\dots): un diccionario
+donde la clave es el tipo de servicio y el valor es la suma de ese tipo. \\
+\texttt{details} & Una \textbf{lista de tickets}: cada reserva con nombre del servicio,
+categoría y precio, lista para mostrar. \\
+\bottomrule
+\end{longtable}
+}
+\end{center}
+
+\subsubsection{El patrón \texttt{if not \dots: continue}}
+
+El bucle recorre los \texttt{booking\_ids} y, con \texttt{continue}, \textbf{se salta} los
+que no le interesan:
+\begin{itemize}
+    \item \textbf{404 silencioso}: si la reserva no existe, la \textbf{omite} (no lanza error).
+    \item \textbf{Filtro de seguridad}: si la reserva no es tuya, la \textbf{omite}.
+    \item \textbf{Defensa}: si el servicio no existe, la \textbf{omite}.
+\end{itemize}
+
+\begin{analogia}
+\texttt{continue} = ``\textbf{paso al siguiente}''. Es como revisar una lista de compras y
+tachar solo lo tuyo: si un papel no te corresponde, lo dejas de lado y sigues con el siguiente.
+\end{analogia}
+
+Aquí \textbf{no se usa} \texttt{raise} (a diferencia de casi todos los endpoints): el frontend
+manda una lista de ids y el servidor \textbf{simplemente ignora} los que no aplican, en vez de
+romper todo el cálculo por uno solo malo.
+
+\subsubsection{El diccionario \texttt{breakdown} y su inicialización}
+
+\begin{lstlisting}
+breakdown = {"guia": 0.0, "hotel": 0.0}
+...
+category = service.type
+if category not in breakdown:
+    breakdown[category] = 0.0
+breakdown[category] += booking.total
+\end{lstlisting}
+
+\textbf{La idea:} cada vez que aparece una categoría nueva, se crea su \textbf{acumulador} en 0
+y luego se le suma. La primera línea es solo un ``arranque'' con las dos más comunes; la
+\texttt{if} garantiza que \textbf{cualquier categoría} pueda aparecer sin error
+(\texttt{KeyError}).
+
+\subsubsection{La respuesta con diccionarios anidados (líneas 43--47)}
+
+\begin{lstlisting}
+return {
+    "total": round(total, 2),
+    "breakdown": {k: round(v, 2) for k, v in breakdown.items() if v > 0},
+    "details": details
+}
+\end{lstlisting}
+
+\textbf{Dos novedades:}
+\begin{itemize}
+    \item \texttt{round(valor, 2)}: \textbf{redondea a 2 decimales} (los centavos). Evita
+    resultados como \texttt{123.4000000001} por la precisión de los flotantes.
+    \item \texttt{\{k: round(v, 2) for k, v in breakdown.items() if v > 0\}}: un
+    \textbf{diccionario por comprensión} con \texttt{if} (lo vimos en \texttt{schemas/cost.py}):
+    ``para cada clave y valor del desglose, redondéalo y \textbf{queda solo si es mayor que 0}'',
+    para no mandar categorías vacías.
+\end{itemize}
+
+\begin{recuadro}
+\texttt{costs.py} = \textbf{calculador puro}: lee reservas tuyas, suma por categoría y devuelve
+\texttt{total} + \texttt{breakdown} + \texttt{details}. Usa \texttt{continue} en vez de
+\texttt{raise} para \textbf{ignorar} lo que no aplica.
+\end{recuadro}
+
+% ============================================================
+\section{\texttt{routes/admin.py} --- el panel del administrador (39 líneas)}
+
+\subsection{¿Qué hace este archivo?}
+
+Es el \textbf{panel de control} de la plataforma. Recuerda que, cuando alguien se registra como
+\texttt{prestador}, su cuenta queda \textbf{desactivada} hasta que un \texttt{admin} la apruebe
+(el campo \texttt{approved} del modelo \texttt{User}, que vimos antes, empieza en
+\texttt{False}).
+
+Este archivo le da al admin:
+\begin{enumerate}
+    \item Ver la \textbf{lista de prestadores pendientes} (los que esperan aprobación).
+    \item \textbf{Aprobar} a un prestador (su cuenta se activa).
+    \item \textbf{Rechazar} a un prestador (su cuenta se \textbf{elimina}).
+\end{enumerate}
+
+Aquí aparece el patrón más importante del archivo: \textbf{una guardia extra} llamada
+\texttt{require\_admin}.
+
+\subsection{La guardia: \texttt{require\_admin} (líneas 9--12)}
+
+\begin{lstlisting}
+def require_admin(current_user: dict = Depends(get_current_user)):
+    if current_user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Se requiere rol de administrador")
+    return current_user
+\end{lstlisting}
+
+\textbf{Una dependencia que protege a otras.} Hasta ahora, cada endpoint usaba
+\texttt{get\_current\_user} (que verificaba ``tienes token''). Pero \textbf{tener token no
+significa ser admin}: cualquiera puede loguearse.
+
+\texttt{require\_admin} hace lo siguiente:
+\begin{enumerate}
+    \item \textbf{Usa \texttt{get\_current\_user}} (ya lo conocemos: verifica que haya un
+    usuario logueado).
+    \item \textbf{Comprueba el rol}: si \texttt{current\_user.get("role")} no es
+    \texttt{"admin"}, lanza \textbf{403} (``No estás autorizado'').
+    \item Si es admin, \textbf{devuelve el usuario} para que el endpoint lo use.
+\end{enumerate}
+
+\textbf{La idea clave:} cada endpoint de este archivo escribe
+\texttt{admin=Depends(require\_admin)} en vez de
+\texttt{current\_user=Depends(get\_current\_user)}. Así, \textbf{FastAPI ejecuta la guardia
+primero}, y si no eres admin, el endpoint \textbf{ni siquiera se ejecuta}.
+
+\begin{analogia}
+Imagina que la app es una oficina con dos puertas:
+\begin{itemize}
+    \item \texttt{get\_current\_user} = el \textbf{guardia de la puerta principal}: verifica
+    que tengas \textbf{carnet} (token).
+    \item \texttt{require\_admin} = un \textbf{segundo guardia} en la puerta de la sala de
+    jefes: además del carnet, revisa que tu carnet diga ``\textbf{ADMIN}''.
+\end{itemize}
+El segundo guardia \textbf{ya sabe} que pasaste el primero (lo llama él mismo). Por eso los
+endpoints no repiten la verificación: \textbf{si llegaste a la sala, es porque eres admin}.
+\end{analogia}
+
+\textbf{La palabra \texttt{get}:} \texttt{current\_user.get("role")} es otra forma de leer un
+valor de un diccionario. A diferencia de \texttt{current\_user["role"]}, si la clave no existe
+\textbf{no da error}: devuelve \texttt{None}. (Un plan ``a prueba de balas''.)
+
+\subsection{La lista de espera: \texttt{GET /prestadores-pendientes} (líneas 14--17)}
+
+\begin{lstlisting}
+@router.get("/prestadores-pendientes")
+def get_pending_prestadores(admin=Depends(require_admin), db: Session = Depends(get_db)):
+    pending = db.query(User).filter(User.role == "prestador", User.approved == False).all()
+    return [{"id": u.id, "name": u.name, "email": u.email, "created_at": str(u.created_at)} for u in pending]
+\end{lstlisting}
+
+\textbf{La novedad: el filtro doble.} \texttt{.filter(\dots, \dots)} con \textbf{coma} significa
+``\textbf{Y} ambas condiciones'' (es un AND de SQL):
+\begin{itemize}
+    \item \texttt{User.role == "prestador"}: solo prestadores.
+    \item \texttt{User.approved == False}: solo los \textbf{aún no aprobados}.
+\end{itemize}
+Juntas: ``dame a los prestadores que \textbf{esperan} aprobación''.
+
+\textbf{La otra novedad: la respuesta es una lista de diccionarios}, no los objetos \texttt{User}.
+Es un ``\textbf{resumen}'':
+\begin{itemize}
+    \item Se \textbf{eligen} solo 4 campos: \texttt{id}, \texttt{name}, \texttt{email},
+    \texttt{created\_at} (para saber desde cuándo espera).
+    \item \textbf{No se mandan} datos que el admin no necesita ver (¡como la \texttt{password\_hash}!
+    Nunca debe salir del servidor).
+    \item \texttt{str(u.created\_at)}: la fecha se convierte a texto para que viaje bien por JSON.
+\end{itemize}
+
+\begin{analogia}
+Es como la \textbf{bandeja de solicitudes} de una app: el admin ve solo una tarjetita con
+nombre, correo y fecha de cada aspirante, \textbf{sin el expediente completo}.
+\end{analogia}
+
+\subsection{Aprobar: \texttt{POST /aprobar/\{user\_id\}} (líneas 19--28)}
+
+\begin{lstlisting}
+@router.post("/aprobar/{user_id}")
+def approve_prestador(user_id: int, admin=Depends(require_admin), db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    if user.role != "prestador":
+        raise HTTPException(status_code=400, detail="El usuario no es prestador")
+    user.approved = True
+    db.commit()
+    return {"message": f"Prestador {user.name} aprobado"}
+\end{lstlisting}
+
+La ``escalera'' que ya conocemos, en versión corta:
+\begin{itemize}
+    \item \textbf{404} ¿No existe el usuario? Error.
+    \item \textbf{400} ¿Existe pero no es prestador? Error (no puedes aprobar a un turista).
+    \item Si llega al final: \texttt{user.approved = True} (\textbf{encender la luz}) +
+    \texttt{db.commit()} (guardar) + mensaje de confirmación.
+\end{itemize}
+
+\textbf{El dato nuevo: \texttt{f-string} en el mensaje.} \texttt{f"Prestador \{user.name\}
+aprobado"} es un texto que \textbf{inserta valores}: las llaves \texttt{\{user.name\}} se
+reemplazan por el nombre real. Por eso el frontend puede mostrar ``Prestador Juan aprobado''.
+
+\subsection{Rechazar: \texttt{POST /rechazar/\{user\_id\}} (líneas 30--39)}
+
+\begin{lstlisting}
+@router.post("/rechazar/{user_id}")
+def reject_prestador(user_id: int, admin=Depends(require_admin), db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    if user.role != "prestador":
+        raise HTTPException(status_code=400, detail="El usuario no es prestador")
+    db.delete(user)
+    db.commit()
+    return {"message": f"Prestador {user.name} rechazado y eliminado"}
+\end{lstlisting}
+
+\textbf{Igual que aprobar... casi.} Las validaciones son idénticas (404 y 400). La diferencia
+está en el final: en vez de \texttt{approved = True}, usa \texttt{db.delete(user)} +
+\texttt{db.commit()}.
+
+\subsubsection{¿Por qué ``aprobar'' solo marca y ``rechazar'' borra?}
+
+Esta es una decisión de diseño que debes notar:
+\begin{center}
+{\small
+\setlength{\tabcolsep}{4pt}
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{3.5cm}>{\raggedright\arraybackslash}p{11.2cm}@{}}
+\toprule
+\textbf{Acción} & \textbf{Qué pasa con el registro} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Acción} & \textbf{Qué pasa con el registro} \\
+\midrule
+\endhead
+\textbf{Aprobar} & El usuario \textbf{sigue existiendo}, solo se le pone la ``luz verde''
+(\texttt{approved=True}). Puede volver a \texttt{False} si hiciera falta. \\
+\textbf{Rechazar} & El usuario \textbf{desaparece de la base} (\texttt{db.delete}). La cuenta
+se borra para siempre. \\
+\bottomrule
+\end{longtable}
+}
+\end{center}
+
+\begin{analogia}
+Aprobar es como \textbf{sellar un permiso} (el documento queda, con su sello). Rechazar es
+como \textbf{tirar el documento a la basura} (ya no existe).
+\end{analogia}
+
+\textbf{Ojo con una consecuencia:} si el prestador rechazado \textbf{ya tenía servicios
+creados}, al borrar al usuario esos servicios pueden quedarse ``huérfanos'' (sin dueño). Es un
+detalle que un sistema real tendría que manejar (por ejemplo, borrar o transferir sus
+servicios primero). No lo hace aquí, pero está bien saberlo.
+
+\begin{recuadro}
+\texttt{admin.py} = el \textbf{panel del jefe}: una guardia (\texttt{require\_admin}) protege
+todo el archivo, filtra por \textbf{dos condiciones} (\texttt{approved == False}), \textbf{elige
+solo los campos} de la respuesta, y termina con dos poderes: \textbf{aprobar} (marcar)
+o \textbf{rechazar} (borrar).
+\end{recuadro}
+
+% ============================================================
+\section{\texttt{routes/ws.py} --- el chat en tiempo real (107 líneas)}
+
+\subsection{¿Qué hace este archivo?}
+
+Es el \textbf{chat en vivo}: los mensajes llegan \textbf{al instante}, sin que el usuario
+tenga que preguntar. Es el archivo más ``distinto'' de la carpeta, porque no usa HTTP sino
+\textbf{WebSockets}. Además marca en la base de datos si un mensaje fue \textbf{leído}.
+
+\subsection{Primero, lo importante: ¿qué es un WebSocket?}
+
+Hasta ahora, todo viajaba por HTTP. WebSocket es otro \textbf{canal} de comunicación:
+
+\begin{center}
+{\small
+\setlength{\tabcolsep}{4pt}
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{2.8cm}>{\raggedright\arraybackslash}p{6.2cm}>{\raggedright\arraybackslash}p{6cm}@{}}
+\toprule
+\textbf{Aspecto} & \textbf{HTTP} & \textbf{WebSocket} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Aspecto} & \textbf{HTTP} & \textbf{WebSocket} \\
+\midrule
+\endhead
+Se parece a & \textbf{Enviar una carta} & \textbf{Hablar por teléfono} \\
+Conexión & Se abre, se responde y \textbf{se cierra} & \textbf{Queda abierta} todo el tiempo \\
+Comunicación & Pregunta $\rightarrow$ respuesta & El servidor puede \textbf{empujar} mensajes solo \\
+Ejemplo & \texttt{GET /services} & Chat en vivo, notificaciones \\
+\bottomrule
+\end{longtable}
+}
+\end{center}
+
+\textbf{La clave:} con WebSocket el servidor puede \textbf{enviar solo} (sin que le pregunten).
+Cuando A envía un mensaje a B, el servidor lo recibe, lo guarda y \textbf{empuja} el mensaje
+hacia B al instante. Eso no se puede hacer con HTTP normal.
+
+\subsection{El \texttt{ConnectionManager}: la recepcionista (líneas 12--33)}
+
+\begin{lstlisting}
+class ConnectionManager:
+    def __init__(self):
+        self.active_connections: dict[int, list[WebSocket]] = {}
+
+    async def connect(self, websocket: WebSocket, user_id: int):
+        await websocket.accept()
+        if user_id not in self.active_connections:
+            self.active_connections[user_id] = []
+        self.active_connections[user_id].append(websocket)
+
+    def disconnect(self, websocket: WebSocket, user_id: int):
+        if user_id in self.active_connections:
+            self.active_connections[user_id].remove(websocket)
+            if not self.active_connections[user_id]:
+                del self.active_connections[user_id]
+
+    async def send_to_user(self, user_id: int, message: dict):
+        if user_id in self.active_connections:
+            for conn in self.active_connections[user_id]:
+                await conn.send_json(message)
+
+manager = ConnectionManager()
+\end{lstlisting}
+
+\textbf{¿Qué es este ``diccionario de listas''?}
+\texttt{active\_connections} guarda \textbf{quién está conectado y en qué canal}:
+\begin{itemize}
+    \item \textbf{Clave} = \texttt{user\_id} (el número del usuario).
+    \item \textbf{Valor} = una \textbf{lista} de conexiones abiertas de ese usuario (porque un
+    mismo usuario puede estar en el celular \textbf{y} en la computadora al mismo tiempo).
+\end{itemize}
+
+\begin{analogia}
+\texttt{ConnectionManager} es la \textbf{recepcionista de un hotel} con un cuaderno:
+\begin{itemize}
+    \item \texttt{connect}: el huésped llega, la recepcionista lo \textbf{acepta} y apunta
+    ``Habitación 5: Juan'' (lo agrega a la lista).
+    \item \texttt{disconnect}: el huésped se va, lo \textbf{borra del cuaderno} (y si era el
+    único en esa habitación, borra la línea completa).
+    \item \texttt{send\_to\_user}: la recepcionista \textbf{corre a entregar} un mensaje a
+    \textbf{todas} las conexiones de ese huésped.
+\end{itemize}
+\end{analogia}
+
+\textbf{La línea \texttt{manager = ConnectionManager()} (33) es muy importante:} es una
+\textbf{única recepcionista para todos}. Como se crea una sola vez (fuera de la función), todos
+los usuarios conectados comparten el \textbf{mismo cuaderno}. Si cada conexión tuviera su
+propio manager, nadie sabría quién está conectado.
+
+\subsection{El canal WebSocket (líneas 35--107)}
+
+\begin{lstlisting}
+@router.websocket("/ws/chat/{user_id}")
+async def websocket_chat(websocket: WebSocket, user_id: int):
+    await manager.connect(websocket, user_id)
+    try:
+        while True:
+            data = await websocket.receive_json()
+            action = data.get("action")
+            if action == "send_message":
+                ...
+            elif action == "mark_read":
+                ...
+    except WebSocketDisconnect:
+        manager.disconnect(websocket, user_id)
+\end{lstlisting}
+
+\textbf{Paso a paso del canal:}
+\begin{enumerate}
+    \item El usuario entra a \texttt{/ws/chat/\{user\_id\}}: aquí el id va \textbf{directo en la
+    URL} (¡nota que no hay token ni \texttt{Depends}! Es un mundo aparte del HTTP).
+    \item \texttt{await manager.connect(...)}: acepta la conexión y lo apunta en el cuaderno.
+    \item \textbf{El bucle \texttt{while True}:} el canal \textbf{queda abierto y escuchando}.
+    Cada vuelta \textbf{espera} el próximo mensaje que llegue.
+    \item \texttt{action}: es el ``\textbf{botón del menú}'' que viaja dentro del mensaje. Hay dos:
+    \texttt{send\_message} (enviar) y \texttt{mark\_read} (marcar leído).
+    \item Si el cliente se desconecta, salta \texttt{WebSocketDisconnect} y se ejecuta
+    \texttt{manager.disconnect}: la recepcionista \textbf{lo borra del cuaderno}.
+\end{enumerate}
+
+\textbf{Una pausa sobre \texttt{async} y \texttt{await}:} son la forma que usa Python para
+``no bloquearse''. \texttt{await} significa ``\textbf{espera aquí} hasta que llegue la
+respuesta, pero mientras tanto haz otras cosas''. Es como pedir la comida y \textbf{platicar}
+con un amigo mientras llega, en vez de quedarte mirando la cocina. Por eso un servidor con
+muchos canales abiertos no se congela.
+
+\subsubsection{Acción \texttt{send\_message}: enviar (líneas 43--89)}
+
+\begin{lstlisting}
+if action == "send_message":
+    booking_id = data["booking_id"]
+    receiver_id = data["receiver_id"]
+    content = data["content"]
+    db = next(get_db())
+    try:
+        booking = db.query(Booking).filter(Booking.id == booking_id).first()
+        if not booking:
+            await websocket.send_json({"error": "Reserva no encontrada"})
+            continue
+        service = db.query(Service).filter(Service.id == booking.service_id).first()
+        if user_id != booking.tourist_id and user_id != service.provider_id:
+            await websocket.send_json({"error": "No autorizado"})
+            continue
+        new_message = Message(
+            sender_id=user_id, receiver_id=receiver_id,
+            booking_id=booking_id, content=content
+        )
+        db.add(new_message); db.commit(); db.refresh(new_message)
+        message_data = {
+            "id": new_message.id, "sender_id": new_message.sender_id,
+            "receiver_id": new_message.receiver_id, "booking_id": new_message.booking_id,
+            "content": new_message.content, "timestamp": str(new_message.timestamp)
+        }
+        await manager.send_to_user(receiver_id, {"action": "new_message", "message": message_data})
+        await websocket.send_json({"action": "message_sent", "message": message_data})
+    finally:
+        db.close()
+\end{lstlisting}
+
+\textbf{Es el mismo ``enviar mensaje'' de \texttt{messages.py}, pero por canal abierto:}
+\begin{enumerate}
+    \item Lee del mensaje: a qué \textbf{reserva}, a \textbf{quién} y \textbf{qué} dice.
+    \item \textbf{Valida} (igual que en HTTP): ¿existe la reserva? ¿eres el turista o el
+    prestador? Si falla, responde \textbf{por el mismo canal} con un \texttt{error} y
+    \texttt{continue} (``sigue escuchando, no cierres'').
+    \item Guarda el \texttt{Message} en la base (igual que siempre).
+    \item \textbf{Lo importante, el doble envío:}
+    \begin{itemize}
+        \item \texttt{send\_to\_user(receiver\_id, ...)}: la recepcionista \textbf{empuja el
+        mensaje al receptor} \emph{si está conectado}. \textbf{Así llega al instante.}
+        \item \texttt{send\_json(...)} al remitente: le confirma ``\textbf{mensaje enviado}''.
+    \end{itemize}
+\end{enumerate}
+
+\textbf{La diferencia con HTTP en una frase:} en \texttt{messages.py} el receptor tiene que
+\textbf{preguntar} por los mensajes; aquí el servidor \textbf{los empuja solos}.
+
+\subsubsection{La base de datos ``a mano'': \texttt{next(get\_db())} y \texttt{finally}}
+
+En HTTP, FastAPI \textbf{inyecta} la sesión con \texttt{Depends(get\_db)}. En WebSocket ese
+patrón no aplica igual, así que aquí la abren \textbf{manualmente}:
+\begin{itemize}
+    \item \texttt{db = next(get\_db())} = ``\textbf{toma la llave} de la puerta de la base''.
+    \item \texttt{finally: db.close()} = ``\textbf{siempre devuelve la llave}, pase lo que
+    pase'' (haya error o no).
+\end{itemize}
+
+\begin{analogia}
+Es como \textbf{prestar un libro}: lo sacas (\texttt{next}), haces lo que necesitas (tu
+código), y con \texttt{finally} te aseguras de \textbf{devolverlo siempre}, aunque se te haya
+caído el café en el camino.
+\end{analogia}
+
+\subsubsection{Acción \texttt{mark\_read}: marcar leído (líneas 91--104)}
+
+\begin{lstlisting}
+elif action == "mark_read":
+    booking_id = data["booking_id"]
+    db = next(get_db())
+    try:
+        db.query(Message).filter(
+            Message.booking_id == booking_id,
+            Message.receiver_id == user_id,
+            Message.read == False
+        ).update({"read": True})
+        db.commit()
+        await websocket.send_json({"action": "read_confirmed", "booking_id": booking_id})
+    finally:
+        db.close()
+\end{lstlisting}
+
+\textbf{Una actualización en lote:}
+\begin{itemize}
+    \item \textbf{Filtro de 3 condiciones} (todas ``Y''): mensajes de esa reserva, dirigidos a
+    \textbf{mí} (\texttt{receiver\_id == user\_id}) y que \textbf{aún no estén leídos}.
+    \item \texttt{.update(\{"read": True\})}: \textbf{todos esos a la vez} pasan a
+    ``leídos'', de una sola instrucción (sin bucle, sin buscar uno por uno).
+    \item Confirma por el canal con \texttt{read\_confirmed}.
+\end{itemize}
+
+\textbf{¿Por qué hace falta?} Cuando abres el chat, el frontend avisa ``marca como leído lo que
+es mío'', y el remitente puede ver si su mensaje ya fue visto. Así, sin recargar la página.
+
+\begin{recuadro}
+\texttt{ws.py} = el \textbf{chat en tiempo real}: una \textbf{recepcionista}
+(\texttt{ConnectionManager}) que anota quién está conectado, un \textbf{canal abierto}
+(\texttt{while True}) que escucha y \textbf{empuja} mensajes al instante, y dos comandos:
+\texttt{send\_message} y \texttt{mark\_read}.
+\end{recuadro}
+
+\subsection{¡Fin de \texttt{routes/}! El mapa de la carpeta}
+
+Con \texttt{ws.py} termina toda la carpeta \texttt{routes/}. Mapa rápido de los 9 archivos:
+
+\begin{center}
+{\small
+\setlength{\tabcolsep}{4pt}
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{3.4cm}>{\raggedright\arraybackslash}p{11.4cm}@{}}
+\toprule
+\textbf{Archivo} & \textbf{En una frase} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Archivo} & \textbf{En una frase} \\
+\midrule
+\endhead
+\texttt{auth.py} & Registro, verificación, login y \textbf{tokens}. Aquí nace
+\texttt{get\_current\_user}, el ``guardián'' que usa todo el resto. \\
+\texttt{services.py} & El \textbf{catálogo}: crear, ver, buscar y editar servicios. \\
+\texttt{bookings.py} & Las \textbf{reservas} y sus reglas (quién puede, cuándo). \\
+\texttt{itineraries.py} & Los \textbf{planes de viaje}: JSON, rutas con Google Maps. \\
+\texttt{messages.py} & El chat por \textbf{HTTP} (enviar y leer historial). \\
+\texttt{reviews.py} & Las \textbf{calificaciones} con sus reglas y el promedio. \\
+\texttt{costs.py} & El \textbf{calculador} de costos del viaje. \\
+\texttt{admin.py} & El \textbf{panel del admin}: aprobar y rechazar prestadores. \\
+\texttt{ws.py} & El chat \textbf{en tiempo real} con WebSockets. \\
+\bottomrule
+\end{longtable}
+}
+\end{center}
+
+\textbf{El hilo que los une:} todos se apoyan en \textbf{4 bloques} que ya dominas: el
+\texttt{db} (base de datos), los \textbf{modelos} (las tablas), los \textbf{schemas} (los
+formularios) y \texttt{get\_current\_user} (el carnet). Los 9 archivos son variaciones de ese
+mismo esqueleto.
+
+% ============================================================
+\section{\texttt{email\_utils.py} --- el cartero (52 líneas)}
+
+\subsection{¿Qué hace este archivo?}
+
+Hasta ahora vimos \textbf{rutas} (que reciben peticiones). Este es otro tipo de archivo: una
+\textbf{utilidad} (de ahí ``utils''). No tiene endpoints ni responde peticiones: es un
+\textbf{servicio interno} que otros archivos \textbf{llaman} cuando lo necesitan.
+
+Concretamente, se encarga de \textbf{enviar el correo de verificación} con el código de 6
+dígitos que viste en \texttt{auth.py}. ¿Te acuerdas del ``\texttt{EMAIL SIMULATED}'' que
+aparecía en consola al registrarte? \textbf{Se genera aquí}.
+
+\begin{analogia}
+Las rutas son la \textbf{tienda} (atienden al cliente). \texttt{email\_utils.py} es la
+\textbf{cocina}: nadie entra a la cocina por la puerta de la tienda; la tienda le \textbf{pide}
+a la cocina el pastel (\texttt{send\_verification\_email}) y la cocina lo hace.
+\end{analogia}
+
+\subsection{La configuración del cartero (líneas 8--12)}
+
+\begin{lstlisting}
+SMTP_HOST = os.getenv("SMTP_HOST", "smtp.gmail.com")
+SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
+SMTP_USER = os.getenv("SMTP_USER", "")
+SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "")
+SMTP_FROM = os.getenv("SMTP_FROM", SMTP_USER)
+\end{lstlisting}
+
+\textbf{El mismo patrón de \texttt{config.py}} que ya conoces: \texttt{os.getenv} con un valor
+por defecto. Aquí se configura el \textbf{servidor de correo} (smtp = ``protocolo para enviar
+correo''):
+
+\begin{itemize}
+    \item \texttt{SMTP\_HOST}: la dirección del servidor (por defecto, el de \textbf{Gmail}).
+    \item \texttt{SMTP\_PORT}: el ``\textbf{número de puerta}'' (587 = la puerta de correo
+    común con cifrado).
+    \item \texttt{SMTP\_USER} y \texttt{SMTP\_PASSWORD}: el \textbf{usuario y contraseña} del
+    correo que envía. Por defecto \textbf{vacíos} (¡importante!).
+    \item \texttt{SMTP\_FROM}: \textbf{quién aparece como remitente} (por defecto, el propio
+    usuario).
+\end{itemize}
+
+\subsection{El código de 6 dígitos (líneas 14--15)}
+
+\begin{lstlisting}
+def generate_verification_code() -> str:
+    return str(random.randint(100000, 999999))
+\end{lstlisting}
+
+Genera un número \textbf{al azar entre 100000 y 999999} (siempre 6 dígitos) y lo devuelve
+como \textbf{texto} (por eso \texttt{str(...)}). \texttt{random} es el módulo de Python para
+azar, como una \textbf{ruleta de casino} para números.
+
+\textbf{La flecha \texttt{-> str} } dice: ``esta función \textbf{devuelve un texto}''. Es una
+\textbf{pista} de qué esperar (ayuda a leer, no obliga nada).
+
+\subsection{El envío real: \texttt{\_send\_email} (líneas 17--49)}
+
+\begin{lstlisting}
+def _send_email(to_email: str, code: str):
+    try:
+        if not SMTP_USER or not SMTP_PASSWORD:
+            print(f"[EMAIL SIMULATED] To: {to_email}, Code: {code}")
+            return
+        msg = MIMEMultipart()
+        msg["From"] = SMTP_FROM
+        msg["To"] = to_email
+msg["Subject"] = "TravelHub - Código de verificación"
+        body = f""" <html> ... Tu código de verificación es: {code} ... </html> """
+        msg.attach(MIMEText(body, "html"))
+        with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=10) as server:
+            server.starttls()
+            server.login(SMTP_USER, SMTP_PASSWORD)
+            server.send_message(msg)
+        print(f"[EMAIL SENT] To: {to_email}")
+    except Exception as e:
+        print(f"[EMAIL FAILED] To: {to_email}, Error: {e}")
+\end{lstlisting}
+
+\textbf{Nota: el guion bajo al inicio} (\texttt{\_send\_email}) es una \textbf{convención}:
+significa ``esta función es \textbf{interna}, no la llames desde fuera''. Es como una
+habitación marcada ``solo empleados''.
+
+\subsubsection{El modo simulado (líneas 19--21): el secreto para desarrolladores}
+
+\begin{lstlisting}
+if not SMTP_USER or not SMTP_PASSWORD:
+    print(f"[EMAIL SIMULATED] To: {to_email}, Code: {code}")
+    return
+\end{lstlisting}
+
+Si las credenciales están \textbf{vacías} (como al principio, sin configurar), \textbf{no
+intenta enviar}: solo \textbf{imprime el código en consola} y \texttt{return} (termina).
+
+\textbf{¿Por qué es genial?} Puedes \textbf{probar todo el flujo de registro sin un correo
+real}: ves el código en la consola y lo usas para verificar. Sin esta trampilla, desarrollar
+sería imposible (tendrías que configurar Gmail de verdad cada vez).
+
+\begin{analogia}
+Es el \textbf{teléfono de juguete} para ensayar la obra de teatro: haces toda la actuación
+(registro, código, verificación) sin necesidad del teatro de verdad. Cuando llegue el día del
+estreno (credenciales reales), el mismo guion funciona.
+\end{analogia}
+
+\subsubsection{Construir el correo (líneas 23--40)}
+
+\begin{lstlisting}
+msg = MIMEMultipart()
+msg["From"] = SMTP_FROM
+msg["To"] = to_email
+msg["Subject"] = "TravelHub - Código de verificación"
+body = f""" <html> ... {code} ... </html> """
+msg.attach(MIMEText(body, "html"))
+\end{lstlisting}
+
+Un correo se arma en \textbf{dos partes}:
+\begin{enumerate}
+    \item \textbf{El sobre} (\texttt{MIMEMultipart}): lleva \texttt{From}, \texttt{To} y
+    \texttt{Subject} (quién, para quién, asunto).
+    \item \textbf{La carta adentro} (\texttt{msg.attach}): el \textbf{HTML} con el diseño
+    bonito (colores, el código gigante en el centro). \texttt{MIMEText(body, "html")} dice
+    ``este texto es HTML, no texto plano''.
+\end{enumerate}
+
+\textbf{La carta es un \texttt{f-string} enorme}: por eso \texttt{\{code\}} se reemplaza por el
+número real. (La parte HTML \emph{real} del archivo tiene más etiquetas: títulos, colores,
+espaciado; aquí la abrevié para que se vea la idea.)
+
+\subsubsection{Entregar el correo (líneas 42--45)}
+
+\begin{lstlisting}
+with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=10) as server:
+    server.starttls()
+    server.login(SMTP_USER, SMTP_PASSWORD)
+    server.send_message(msg)
+\end{lstlisting}
+
+\textbf{Tres pasos para entregar:}
+\begin{enumerate}
+    \item \texttt{starttls()}: \textbf{activa el cifrado} (sella la carta para que nadie la
+    lea en el camino).
+    \item \texttt{login(...)}: \textbf{identificarse} ante el servidor con usuario y contraseña.
+    \item \texttt{send\_message(msg)}: \textbf{entregar} el correo.
+\end{enumerate}
+
+\textbf{El \texttt{with} es tu amigo:} cuando termina el bloque (o hay un error), el servidor
+se \textbf{cierra solo}. Es el mismo ``devolver la llave siempre'' que viste en \texttt{ws.py}.
+
+\subsubsection{La red de seguridad (líneas 48--49)}
+
+\begin{lstlisting}
+except Exception as e:
+    print(f"[EMAIL FAILED] To: {to_email}, Error: {e}")
+\end{lstlisting}
+
+Si \textbf{cualquier cosa} falla (no hay internet, la contraseña es mala, el servidor está
+caído), se \textbf{captura} y solo se \textbf{imprime el error}: \textbf{la app no se rompe}.
+
+\begin{analogia}
+Es el \textbf{colchón de seguridad}: el correo puede fallar, pero el usuario \textbf{igual
+puede registrarse} (el registro no depende del correo). Fallar en silencio y seguir es mejor
+que \textbf{estrellar toda la app} por un correo que no salió.
+\end{analogia}
+
+\subsection{La función que todos usan: \texttt{send\_verification\_email} (líneas 51--52)}
+
+\begin{lstlisting}
+def send_verification_email(to_email: str, code: str):
+    threading.Thread(target=_send_email, args=(to_email, code), daemon=True).start()
+\end{lstlisting}
+
+Es la función \textbf{pública} (sin guion bajo) que \texttt{auth.py} llama. Su magia:
+\textbf{lanza el envío en un hilo aparte} (\texttt{threading.Thread}).
+
+\textbf{¿Por qué en un hilo?} Enviar un correo \textbf{toma tiempo} (abrir conexión, login,
+red\dots). Si lo hiciera en línea, el usuario \textbf{esperaría congelado} en el registro
+mientras el correo se envía. Con un \textbf{hilo}, el correo se envía ``\textbf{por detrás}''
+mientras la app \textbf{sigue atendiendo} al usuario.
+
+\begin{analogia}
+Es como darle la carta a un \textbf{asistente} para que la lleve al correo mientras tú sigues
+\textbf{conversando con el cliente}. No lo haces esperar a que vuelva el asistente.
+\end{analogia}
+
+\textbf{El \texttt{daemon=True} } es el último detalle: dice ``este ayudante es \textbf{de
+confianza}, no bloquea el cierre de la tienda''. Si la app se apaga, el hilo se apaga con ella
+sin dejarla esperando.
+
+\begin{recuadro}
+\texttt{email\_utils.py} = el \textbf{cartero}: genera el código de 6 dígitos, arma el correo
+(envelope + HTML), lo envía cifrado, y tiene \textbf{modo simulado} (sin credenciales imprime
+el código en consola) + \textbf{red de seguridad} (nunca rompe la app) + \textbf{hilos} (no
+hace esperar al usuario).
+\end{recuadro}
+
+% ============================================================
+\section{\texttt{maps\_utils.py} --- el navegador (112 líneas)}
+
+\subsection{¿Qué hace este archivo?}
+
+Otra \textbf{utilidad} (como \texttt{email\_utils.py}): no tiene rutas, es un servicio que
+otros archivos llaman. Es la función que \texttt{itineraries.py} invocaba en
+\texttt{POST /itineraries/\{id\}/directions}: \textbf{calcular la ruta} entre el origen, los
+puntos intermedios y el destino.
+
+Pero aquí está la idea más valiosa de todo el archivo: tiene \textbf{dos planes}:
+
+\begin{center}
+{\small
+\setlength{\tabcolsep}{4pt}
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{4.6cm}>{\raggedright\arraybackslash}p{10.2cm}@{}}
+\toprule
+\textbf{Plan} & \textbf{Cuándo se usa} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Plan} & \textbf{Cuándo se usa} \\
+\midrule
+\endhead
+\textbf{Google Maps} (\texttt{get\_directions}) & Cuando hay \textbf{API key} configurada y
+Google responde bien. \\
+\textbf{Estimación} (\texttt{\_estimate\_directions}) & \textbf{Plan B}: sin API key, o si
+Google falla o responde mal. \\
+\bottomrule
+\end{longtable}
+}
+\end{center}
+
+\begin{analogia}
+Es como \textbf{llamar a un taxi} para ir a un lugar: si el taxi llega (\textbf{Google}), el
+viaje es exacto. Pero si no hay taxi (sin clave) o el taxi se descompone (error), \textbf{caminas
+con un plano} y estimas la distancia \textbf{al vuelo}. \textbf{Siempre llegas} a un resultado.
+\end{analogia}
+
+\subsection{Primero, ¿qué es una ``API key''?}
+
+Una \textbf{API} es ``la cocina de otra persona'': tú no sabes cómo Google calcula rutas, solo
+le \textbf{pides} y te responde. La \textbf{key} es la \textbf{credencial} (como tu carnet de
+acceso) que te da derecho a usar ese servicio (y Google te \textbf{cobra} por usarlo).
+
+Por eso, en desarrollo, la clave suele estar \textbf{vacía} (como SMTP en el cartero): para no
+gastar dinero ni configurar cuentas. Y de ahí nace el \textbf{plan B}.
+
+\subsection{El plan A: \texttt{get\_directions} (líneas 4--62)}
+
+\begin{lstlisting}
+def get_directions(origin_lat, origin_lng, dest_lat, dest_lng, waypoints=None):
+    if not GOOGLE_MAPS_API_KEY:
+        return _estimate_directions(...)
+    origin = f"{origin_lat},{origin_lng}"
+    destination = f"{dest_lat},{dest_lng}"
+    wp = ""
+    if waypoints:
+        wp = "|".join(f"{p['lat']},{p['lng']}" for p in waypoints)
+    url = "https://maps.googleapis.com/maps/api/directions/json"
+    params = {"origin": origin, "destination": destination,
+              "key": GOOGLE_MAPS_API_KEY, "mode": "driving",
+              "units": "metric", "language": "es"}
+    if wp:
+        params["waypoints"] = wp
+    try:
+        resp = requests.get(url, params=params, timeout=10)
+        data = resp.json()
+        if data["status"] != "OK":
+            return _estimate_directions(...)
+        ...
+    except Exception:
+        return _estimate_directions(...)
+\end{lstlisting}
+
+\textbf{El camino del plan A, paso a paso:}
+
+\begin{enumerate}
+    \item \textbf{Chequeo rápido} (líneas 7--8): si no hay API key, \textbf{no pierde tiempo}
+    y va directo al plan B.
+    \item \textbf{Prepara las coordenadas} (líneas 10--14): cada punto se convierte a texto
+    ``latitud,longitud''. Los puntos intermedios se \textbf{unen con una barra}
+    (\texttt{"|".join(...)}), que es el formato que espera Google.
+    \item \textbf{Pregunta a Google} (líneas 16--26): construye la \textbf{URL} del servicio
+    de direcciones y un diccionario \texttt{params} con la pregunta: \textbf{de dónde}
+    (origin), \textbf{a dónde} (destination), \textbf{clave}, \textbf{en auto} (mode=driving),
+    en \textbf{kilómetros} (units=metric) y en \textbf{español} (language=es).
+    \item \textbf{Envía y espera} (línea 29): \texttt{requests.get(...)} es ``\textbf{yo pregunto,
+    Google responde}''. Igual que una ruta GET, pero hacia el servidor de Google.
+    \item \textbf{Lee la respuesta} (línea 30): \texttt{resp.json()} convierte el JSON que
+    devolvió Google en un diccionario de Python.
+    \item \textbf{¿Respuesta buena?} (línea 31): si \texttt{status != "OK"} (Google dice
+    ``no encontré ruta''), \textbf{plan B}.
+    \item \textbf{Si todo bien:} procesa la respuesta (lo vemos a continuación).
+    \item \textbf{La red de seguridad} (línea 61--62): si \textbf{cualquier} error ocurre
+    (sin internet, tiempo agotado\dots), \textbf{plan B}. Igual que el cartero: nunca rompe la app.
+\end{enumerate}
+
+\textbf{Fíjate cómo funciona el ``plan B'' en la práctica:} \texttt{\_estimate\_directions} se
+llama desde \textbf{3 lugares} (sin clave, respuesta mala, error). Es el mismo
+``reparador de emergencias'' de siempre.
+
+\subsubsection{Procesar la respuesta buena de Google (líneas 34--60)}
+
+\begin{lstlisting}
+legs = []
+total_distance_m = 0
+total_duration_s = 0
+for leg in data["routes"][0]["legs"]:
+    legs.append({
+        "distance_m": leg["distance"]["value"],
+        "distance_text": leg["distance"]["text"],
+        "duration_s": leg["duration"]["value"],
+        "duration_text": leg["duration"]["text"],
+        "start_address": leg.get("start_address", ""),
+        "end_address": leg.get("end_address", "")
+    })
+    total_distance_m += leg["distance"]["value"]
+    total_duration_s += leg["duration"]["value"]
+polyline = data["routes"][0].get("overview_polyline", {}).get("points", "")
+return {
+    "total_distance_m": total_distance_m,
+    "total_distance_km": round(total_distance_m / 1000, 2),
+    "total_duration_s": total_duration_s,
+    "total_duration_min": round(total_duration_s / 60, 1),
+    "total_duration_text": f"{total_duration_s // 60} min",
+    "legs": legs,
+    "polyline": polyline,
+    "source": "google"
+}
+\end{lstlisting}
+
+\textbf{¿Qué es un ``\texttt{leg}''?} Es \textbf{cada tramo} del viaje: del origen al primer
+punto, de ese punto al siguiente\dots Google devuelve \textbf{una lista de tramos} y este código:
+\begin{enumerate}
+    \item Los \textbf{recorre uno por uno} y guarda de cada uno: \textbf{distancia} (en metros
+    y en texto ``12,4 km''), \textbf{duración} (en segundos y en texto), y las \textbf{direcciones}
+    de inicio y fin.
+    \item Va \textbf{sumando} distancia y duración totales.
+    \item Extrae el \textbf{polyline}: un texto cifrado con la \textbf{forma del recorrido},
+    que el frontend usa para \textbf{dibujar la línea en el mapa}.
+    \item Devuelve el \textbf{resumen final}: totales + lista de tramos + polyline +
+    \texttt{"source": "google"} (``lo calculó Google de verdad'').
+\end{enumerate}
+
+\textbf{¿Te suena esa forma?} Es la plantilla \texttt{DirectionsResponse} que vimos en la
+carpeta \texttt{schemas} (en \texttt{itinerary.py}): \textbf{este diccionario es lo que se
+llena al final}. Conecta con lo que estudiaste en schemas.
+
+\subsection{El plan B: \texttt{\_estimate\_directions} (líneas 65--112)}
+
+\begin{lstlisting}
+def _estimate_directions(...):
+    from math import radians, sin, cos, sqrt, atan2
+    def haversine(lat1, lng1, lat2, lng2):
+        R = 6371000
+        dlat = radians(lat2 - lat1)
+        dlng = radians(lng2 - lng1)
+        a = sin(dlat/2)**2 + cos(radians(lat1)) * cos(radians(lat2)) * sin(dlng/2)**2
+        c = 2 * atan2(sqrt(a), sqrt(1 - a))
+        return R * c
+    points = [{"lat": origin_lat, "lng": origin_lng}]
+    if waypoints:
+        points.extend(waypoints)
+    points.append({"lat": dest_lat, "lng": dest_lng})
+    total_distance_m = 0
+    legs = []
+    for i in range(len(points) - 1):
+        d = haversine(points[i]["lat"], points[i]["lng"], points[i+1]["lat"], points[i+1]["lng"])
+        total_distance_m += d
+        legs.append({"distance_m": round(d),
+                     "distance_text": f"{round(d/1000, 2)} km" if d >= 1000 else f"{round(d)} m",
+                     "duration_s": round(d / 1.4),
+                     "duration_text": f"{round(d / 1.4 / 60)} min",
+                     "start_address": ..., "end_address": ...})
+    speed_ms = 1.4
+    total_duration_s = round(total_distance_m / speed_ms)
+    return { ... "source": "estimate" }
+\end{lstlisting}
+
+\textbf{La fórmula de Haversine (líneas 70--76):} es una \textbf{fórmula matemática} que
+calcula la distancia \textbf{entre dos puntos sobre una esfera} (la Tierra). Por eso el radio
+\texttt{R = 6371000} (¡la Tierra mide \textbf{6.371 km} de radio, en metros!). Devuelve la
+distancia ``\textbf{en línea recta sobre el planeta}'' (a vuelo de pájaro), sin calles.
+
+\begin{analogia}
+Google sabe las \textbf{calles reales}. La estimación solo mide \textbf{la recta en el globo}:
+es \textbf{más corta} que la ruta real (nadie vuela por las calles), pero sirve para
+\textbf{orientarte} mientras no hay Google.
+\end{analogia}
+
+\textbf{El resto es el mismo esqueleto de siempre:}
+\begin{enumerate}
+    \item Arma la lista de puntos: origen + intermedios + destino (líneas 78--81).
+    \item \textbf{Recorre pares consecutivos} (origen$\rightarrow$punto 1, punto 1$\rightarrow$punto 2,
+    \dots, último$\rightarrow$destino) y calcula cada tramo con Haversine.
+    \item Estima el \textbf{tiempo} con una velocidad fija \texttt{1.4} m/s (un paso
+    humano promedio al caminar): \texttt{tiempo = distancia $\div$ velocidad}.
+    \item Devuelve \textbf{el mismo formato} que Google, pero con \texttt{polyline} vacío y
+    \texttt{"source": "estimate"}.
+\end{enumerate}
+
+\subsection{La lección grande: el \textbf{fallback} (plan B)}
+
+Esta es la idea profesional que debes quedarte de este archivo:
+
+\begin{recuadro}
+Un \textbf{fallback} = ``\textbf{si esto falla, haz esto otro}''. \texttt{maps\_utils.py} nunca
+se queda sin respuesta: siempre \textbf{intenta lo caro y preciso} (Google) y, si no puede,
+\textbf{entrega algo decente} (estimación) \textbf{sin romper la app}. Eso se llama
+\textbf{degradación elegante}.
+\end{recuadro}
+
+\textbf{Y el campo \texttt{source} es el detalle de calidad:} como la respuesta dice de dónde
+vino (\texttt{"google"} o \texttt{"estimate"}), el frontend puede mostrar ``ruta exacta'' o
+``estimación'', o el desarrollador puede \textbf{depurar} por qué se usó el plan B.
+
+\begin{recuadro}
+\texttt{maps\_utils.py} = el \textbf{navegador con dos planes}: pregunta a \textbf{Google Maps}
+(distancias, tiempos, polyline) y si no hay clave o algo falla, usa la \textbf{fórmula de
+Haversine} para \textbf{estimar} la distancia. Devuelve \textbf{siempre} el mismo formato y
+marca \texttt{source} para saber cuál plan se usó.
+\end{recuadro}
+
+% ============================================================
+\section{\texttt{travelhub.db} --- la base de datos (el archivo de datos)}
+
+\subsection{¿Qué es este archivo?}
+
+Todos los archivos que hemos visto son \textbf{código}: instrucciones. Este es otro tipo: es
+\textbf{donde viven los datos}. Es la base de datos \textbf{SQLite} de la app, en un solo
+archivo físico.
+
+\begin{itemize}
+    \item \textbf{Tipo de archivo}: \texttt{SQLite} (una base de datos \textbf{sin servidor},
+    que vive en \textbf{un solo archivo}).
+    \item \textbf{Tamaño real en tu proyecto}: 57 KB (¡casi nada!).
+    \item \textbf{Quién lo crea}: \textbf{la propia app}, automáticamente. Recuerda
+    \texttt{database.py}: al arrancar, la app ejecuta \texttt{create\_all(bind=engine)}, que
+    \textbf{crea las tablas} si no existen. Tú no escribes este archivo a mano.
+\end{itemize}
+
+\begin{analogia}
+El \textbf{código} es la \textbf{receta} (los modelos dicen ``así es una reserva''). La
+\textbf{base de datos} es la \textbf{despensa}: ahí se \textbf{guardan los ingredientes reales}
+(las reservas que los usuarios hicieron de verdad).
+\end{analogia}
+
+\subsection{¿Qué hay adentro? Las 6 tablas}
+
+Si abrimos el archivo, encontramos \textbf{6 tablas}, exactamente las mismas que estudiamos
+en \texttt{models/}:
+
+\begin{center}
+{\small
+\setlength{\tabcolsep}{4pt}
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{3.2cm}>{\raggedright\arraybackslash}p{7.4cm}>{\raggedright\arraybackslash}p{4.2cm}@{}}
+\toprule
+\textbf{Tabla} & \textbf{Columnas} & \textbf{Filas} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Tabla} & \textbf{Columnas} & \textbf{Filas} \\
+\midrule
+\endhead
+\texttt{users} & id, name, email, password\_hash, role, verified, created\_at & 4 \\
+\texttt{services} & id, provider\_id, type, name, description, price, location, rating, available, created\_at & 2 \\
+\texttt{itineraries} & id, tourist\_id, day, route\_data, created\_at & 1 \\
+\texttt{bookings} & id, tourist\_id, service\_id, date, status, total, created\_at & 1 \\
+\texttt{messages} & id, sender\_id, receiver\_id, booking\_id, content, read, timestamp & 1 \\
+\texttt{reviews} & id, booking\_id, tourist\_id, service\_id, rating, comment, created\_at & 0 \\
+\bottomrule
+\end{longtable}
+}
+\end{center}
+
+\textbf{Observa dos cosas:}
+\begin{enumerate}
+    \item \textbf{Los nombres y columnas son los que pusimos en los modelos} (en SQLAlchemy
+    se llama ``la tabla mapea al modelo''): \texttt{Bookings $\rightarrow$ bookings},
+    \texttt{User $\rightarrow$ users}, etc.
+    \item \textbf{Las 6 tablas existen incluso con 0 filas} (mira \texttt{reviews}): cuando la
+    app crea la base, \textbf{crea todas} las tablas a la vez, estén vacías o no. Las filas
+    actuales (4 usuarios, 2 servicios, etc.) son \textbf{datos de prueba} de cuando corriste la app.
+\end{enumerate}
+
+\subsection{La primera lección: \texttt{create\_all} no toca lo que ya existe}
+
+\textbf{Dato importante de cómo se crean:} \texttt{create\_all} solo \textbf{crea las tablas
+que faltan}. Si una tabla ya existe, \textbf{no la modifica}. Parece un detalle, pero tiene
+una consecuencia real que ya puedes ver en tu proyecto:
+
+\begin{center}
+{\small
+\setlength{\tabcolsep}{4pt}
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{7.5cm}>{\raggedright\arraybackslash}p{7.3cm}@{}}
+\toprule
+\textbf{El modelo \texttt{User} dice} & \textbf{La tabla \texttt{users} real tiene} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{El modelo \texttt{User} dice} & \textbf{La tabla \texttt{users} real tiene} \\
+\midrule
+\endhead
+id, name, email, password\_hash, role, verified, created\_at & id, name, email, password\_hash, role, verified, created\_at \\
+approved, verification\_code, verification\_code\_expires & \textbf{(no existen)} \\
+\bottomrule
+\end{longtable}
+}
+\end{center}
+
+Es decir: el \textbf{código} ya conoce las columnas \texttt{approved} y los códigos de
+verificación (los agregaste al modelo después), pero la \textbf{base guardada} se creó
+\textbf{antes} y \texttt{create\_all} \textbf{no la actualizó}. El código y la base están
+\textbf{desincronizados}.
+
+\begin{analogia}
+Es como si actualizaras la \textbf{receta} (el modelo) para incluir ``canela'', pero la
+\textbf{despensa} (la base) sigue con el estante de antes: la receta dice que existe, pero en
+el estante no hay canela.
+\end{analogia}
+
+\textbf{¿Por qué importa?} Si el código ejecuta \texttt{user.approved = True} (como hace
+\texttt{admin.py}), la base \textbf{fallará}: no existe esa columna. Por eso los proyectos
+reales usan \textbf{migraciones} (una herramienta llamada \textbf{Alembic}) que sirve para
+``\textbf{actualizar la despensa de a poco}'': agregan las columnas nuevas sin borrar los datos.
+
+\textbf{La solución práctica por ahora:} \textbf{borrar el archivo} y dejar que la app lo cree
+de nuevo con la estructura nueva. Como es una base de prueba, es lo más simple. (¡Y por eso
+poder borrarla sin miedo es parte del diseño!)
+
+\subsection{La segunda lección: \texttt{*.db} está en \texttt{.gitignore}}
+
+Si abres \texttt{.gitignore}, verás la línea \texttt{*.db}. Eso significa que la base
+\textbf{NO se sube a Git}: cada quien, al clonar el proyecto y correr la app, se crea \textbf{su
+propia base local}.
+
+\begin{itemize}
+    \item \textbf{Lo bueno}: el código se comparte (recetas), los datos no (cada despensa es
+    local). Evita conflictos entre desarrolladores.
+    \item \textbf{El otro lado de la moneda}: los datos de prueba no viajan con el repositorio;
+    cada máquina empieza de cero.
+\end{itemize}
+
+\begin{recuadro}
+\texttt{travelhub.db} = \textbf{donde viven los datos} (no es código). Lo crea la app
+automáticamente con las \textbf{6 tablas} de los modelos. Lección clave: \texttt{create\_all}
+\textbf{solo crea lo que falta} (no actualiza lo existente) y \texttt{*.db} está en
+\texttt{.gitignore} (\textbf{los datos no viajan por Git}).
+\end{recuadro}
+
+% ============================================================
+\section{\texttt{Procfile} --- la instrucción para subir la app (1 línea)}
+
+\subsection{¿Para qué sirve?}
+
+\textbf{Procfile} viene de ``\textbf{Process File}'' (archivo de procesos). Es un archivo
+\textbf{tiny} que usan las plataformas de \textbf{hospedaje en la nube} (Heroku, Render, etc.)
+para saber \textbf{cómo iniciar tu app}.
+
+Sin este archivo, la plataforma \textbf{no sabría} que tu proyecto es una app web ni cómo
+arrancarla. Es la \textbf{única línea} que tiene:
+
+\begin{lstlisting}
+web: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+\end{lstlisting}
+
+\subsection{Desmenucemos la línea}
+
+\textbf{web: } La palabra antes de los dos puntos es el \textbf{tipo de proceso}. ``\texttt{web}''
+le dice a la plataforma: ``\textbf{este es el servidor que recibe el tráfico web}''. Es el único
+proceso obligatorio para una web.
+
+El resto es \textbf{el mismo comando} que ya usas para correr la app localmente
+(\texttt{uvicorn}), pero con dos diferencias para producción:
+
+\begin{center}
+{\small
+\setlength{\tabcolsep}{4pt}
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{5.2cm}>{\raggedright\arraybackslash}p{9.6cm}@{}}
+\toprule
+\textbf{Pieza} & \textbf{Qué hace} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Pieza} & \textbf{Qué hace} \\
+\midrule
+\endhead
+\texttt{uvicorn app.main:app} & \textbf{Inicia el servidor}: ``del módulo
+\texttt{app.main}, usa el objeto \texttt{app}'' (el que FastAPI creó en \texttt{main.py}). Es el
+mismo arranque que ya conoces. \\
+\texttt{--host 0.0.0.0} & \textbf{Escucha en todas las direcciones}, no solo en tu computadora.
+Localmente basta \texttt{127.0.0.1}; en la nube, \textbf{0.0.0.0} abre la puerta a todo el
+internet. \\
+\texttt{--port \$PORT} & El \textbf{puerto lo asigna la plataforma}: \$PORT es una \textbf{variable
+de entorno} que la nube llena al momento de arrancar (en tu PC usabas 8000 fijo; aquí lo
+decide el host). \\
+\bottomrule
+\end{longtable}
+}
+\end{center}
+
+\begin{analogia}
+Es la \textbf{tarjeta que le das al conserje del hotel} para cuando llegues: ``habitación para
+\emph{app.main}, con ventana \emph{0.0.0.0}, y \textbf{el número de habitación me lo asignas tú
+al hacer check-in}'' (\texttt{\$PORT}). El hotel (la nube) la lee y \textbf{deja todo listo
+antes de que llegues}.
+\end{analogia}
+
+\subsection{La conexión con \texttt{render.yaml} y \texttt{main.py}}
+
+Fíjate que \textbf{no estás aprendiendo algo nuevo}: la plataforma \texttt{Render} (que también
+tienes en el proyecto, en \texttt{render.yaml}) tiene esta línea \emph{idéntica} como su
+\texttt{startCommand}:
+
+\begin{lstlisting}
+startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+\end{lstlisting}
+
+Y el propio \texttt{main.py} usa el mismo comando al final:
+\texttt{uvicorn.run("app.main:app", host="0.0.0.0", port=8000)}. Es \textbf{el mismo arranque en
+tres lugares}: el Procfile (Heroku), \texttt{render.yaml} (Render) y \texttt{main.py} (local).
+Todos dicen lo mismo: ``\textbf{esto es una app FastAPI y se arranca así}''.
+
+\textbf{La diferencia del puerto:} en local usas \textbf{8000} (fijo, tuyo). En la nube, el
+puerto \textbf{cambia con cada despliegue}, así que se lee de \texttt{\$PORT} en vez de
+escribirlo a mano.
+
+\begin{recuadro}
+\texttt{Procfile} = la \textbf{instrucción de arranque} para la nube: ``\texttt{web}'' +
+\textbf{uvicorn} + ``escucha en \texttt{0.0.0.0}'' + ``puerto \textbf{asignado} por la plataforma
+(\texttt{\$PORT})''. El mismo comando aparece en \texttt{render.yaml} y en \texttt{main.py}.
+\end{recuadro}
+
+\end{document}

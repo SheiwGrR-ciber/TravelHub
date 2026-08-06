@@ -24,7 +24,10 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ItineraryScreen(onBack: () -> Unit) {
+fun ItineraryScreen(
+    onBack: () -> Unit,
+    onOpenBuilder: (itineraryId: Int) -> Unit
+) {
     val scope = rememberCoroutineScope()
     var itineraries by remember { mutableStateOf<List<ItineraryResponse>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
@@ -32,10 +35,11 @@ fun ItineraryScreen(onBack: () -> Unit) {
     var showCreateForm by remember { mutableStateOf(false) }
     var newDay by remember { mutableStateOf("") }
     var isSubmitting by remember { mutableStateOf(false) }
+    var deletingId by remember { mutableStateOf<Int?>(null) }
 
     val token = TokenManager.getToken()
 
-    fun loadItineraries() {
+    fun load() {
         if (token == null) return
         scope.launch {
             isLoading = true
@@ -45,10 +49,10 @@ fun ItineraryScreen(onBack: () -> Unit) {
                 if (response.isSuccessful) {
                     itineraries = response.body() ?: emptyList()
                 } else {
-                    errorMessage = "Error al cargar itinerarios: ${response.code()}"
+                    errorMessage = "Error al cargar: ${response.code()}"
                 }
             } catch (e: Exception) {
-                errorMessage = "Error de conexi\u00f3n: ${e.localizedMessage}"
+                errorMessage = "Error de conexión: ${e.localizedMessage}"
             } finally {
                 isLoading = false
             }
@@ -63,15 +67,12 @@ fun ItineraryScreen(onBack: () -> Unit) {
             try {
                 val response = ApiClient.api.createItinerary(
                     token = token,
-                    itinerary = ItineraryCreate(
-                        day = day,
-                        route_data = emptyMap()
-                    )
+                    itinerary = ItineraryCreate(day = day, route_data = emptyMap())
                 )
                 if (response.isSuccessful) {
                     showCreateForm = false
                     newDay = ""
-                    loadItineraries()
+                    load()
                 }
             } catch (_: Exception) {} finally {
                 isSubmitting = false
@@ -79,9 +80,20 @@ fun ItineraryScreen(onBack: () -> Unit) {
         }
     }
 
-    LaunchedEffect(Unit) {
-        loadItineraries()
+    fun deleteItinerary(id: Int) {
+        if (token == null) return
+        scope.launch {
+            deletingId = id
+            try {
+                ApiClient.api.deleteItinerary(token, id)
+                load()
+            } catch (_: Exception) {} finally {
+                deletingId = null
+            }
+        }
     }
+
+    LaunchedEffect(Unit) { load() }
 
     Scaffold(
         topBar = {
@@ -101,47 +113,36 @@ fun ItineraryScreen(onBack: () -> Unit) {
         }
     ) { padding ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .background(CremaClaro)
+            modifier = Modifier.fillMaxSize().padding(padding).background(CremaClaro)
         ) {
             when {
                 isLoading -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
+                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         CircularProgressIndicator(color = Terracota)
                     }
                 }
                 errorMessage != null -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
+                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text(text = errorMessage ?: "", color = Error)
-                            Spacer(modifier = Modifier.height(16.dp))
+                            Spacer(Modifier.height(16.dp))
                             Button(
-                                onClick = { loadItineraries() },
+                                onClick = { load() },
                                 colors = ButtonDefaults.buttonColors(containerColor = Terracota)
-                            ) {
-                                Text("Reintentar")
-                            }
+                            ) { Text("Reintentar") }
                         }
                     }
                 }
                 !showCreateForm && itineraries.isEmpty() -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = "No tienes itinerarios a\u00fan",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = TextoClaro
-                        )
+                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text("No tienes itinerarios aún", style = MaterialTheme.typography.bodyLarge, color = TextoClaro)
+                            Spacer(Modifier.height(16.dp))
+                            Button(
+                                onClick = { showCreateForm = true },
+                                colors = ButtonDefaults.buttonColors(containerColor = Terracota)
+                            ) { Text("Crear Itinerario") }
+                        }
                     }
                 }
                 else -> {
@@ -164,38 +165,48 @@ fun ItineraryScreen(onBack: () -> Unit) {
                                             color = Terracota
                                         ) {
                                             Text(
-                                                text = "D\u00eda ${itinerary.day}",
+                                                text = "Día ${itinerary.day}",
                                                 modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
                                                 style = MaterialTheme.typography.titleMedium,
                                                 fontWeight = FontWeight.Bold,
                                                 color = CremaCalido
                                             )
                                         }
+                                        Spacer(Modifier.weight(1f))
+                                        IconButton(onClick = { deleteItinerary(itinerary.id) }) {
+                                            if (deletingId == itinerary.id) {
+                                                CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp, color = Error)
+                                            } else {
+                                                Icon(Icons.Default.Delete, "Eliminar", tint = Error)
+                                            }
+                                        }
                                     }
 
-                                    if (itinerary.route_data != null && itinerary.route_data.isNotEmpty()) {
-                                        Spacer(modifier = Modifier.height(12.dp))
-                                        Text(
-                                            text = "Ruta: ${itinerary.route_data.entries.joinToString(", ") { "${it.key}: ${it.value}" }}",
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            color = TextoClaro
-                                        )
-                                    } else {
-                                        Spacer(modifier = Modifier.height(12.dp))
-                                        Text(
-                                            text = "Sin datos de ruta",
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            color = TextoClaro
-                                        )
+                                    val rd = itinerary.route_data
+                                    val points = rd?.get("points") as? List<*> ?: emptyList<Any>()
+                                    val bookingIds = rd?.get("booking_ids") as? List<*> ?: emptyList<Any>()
+
+                                    if (points.isNotEmpty()) {
+                                        Spacer(Modifier.height(8.dp))
+                                        Text("${points.size} punto(s) en ruta", style = MaterialTheme.typography.bodyMedium, color = TextoClaro)
+                                    }
+                                    if (bookingIds.isNotEmpty()) {
+                                        Text("${bookingIds.size} reserva(s) incluidas", style = MaterialTheme.typography.bodySmall, color = TextoClaro)
+                                    }
+                                    if (points.isEmpty() && bookingIds.isEmpty()) {
+                                        Text("Sin datos de ruta", style = MaterialTheme.typography.bodySmall, color = TextoClaro)
                                     }
 
-                                    if (itinerary.created_at != null) {
-                                        Spacer(modifier = Modifier.height(6.dp))
-                                        Text(
-                                            text = "Creado: ${itinerary.created_at}",
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = TextoClaro.copy(alpha = 0.7f)
-                                        )
+                                    Spacer(Modifier.height(12.dp))
+                                    Button(
+                                        onClick = { onOpenBuilder(itinerary.id) },
+                                        modifier = Modifier.fillMaxWidth(),
+                                        colors = ButtonDefaults.buttonColors(containerColor = Terracota),
+                                        shape = RoundedCornerShape(12.dp)
+                                    ) {
+                                        Icon(Icons.Default.Map, contentDescription = null)
+                                        Spacer(Modifier.width(8.dp))
+                                        Text("Construir Ruta", color = CremaCalido)
                                     }
                                 }
                             }
@@ -209,40 +220,24 @@ fun ItineraryScreen(onBack: () -> Unit) {
                             color = Superficie
                         ) {
                             Column(modifier = Modifier.padding(16.dp)) {
-                                Text(
-                                    text = "Nuevo Itinerario",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = TextoOscuro
-                                )
-                                Spacer(modifier = Modifier.height(12.dp))
+                                Text("Nuevo Itinerario", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = TextoOscuro)
+                                Spacer(Modifier.height(12.dp))
                                 OutlinedTextField(
                                     value = newDay,
                                     onValueChange = { newDay = it },
-                                    label = { Text("N\u00famero de d\u00eda") },
+                                    label = { Text("Número de día") },
                                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                                     modifier = Modifier.fillMaxWidth(),
-                                    colors = OutlinedTextFieldDefaults.colors(
-                                        focusedBorderColor = Terracota,
-                                        focusedLabelColor = Terracota
-                                    ),
+                                    colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = Terracota, focusedLabelColor = Terracota),
                                     shape = RoundedCornerShape(12.dp)
                                 )
-                                Spacer(modifier = Modifier.height(12.dp))
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
+                                Spacer(Modifier.height(12.dp))
+                                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                     OutlinedButton(
-                                        onClick = {
-                                            showCreateForm = false
-                                            newDay = ""
-                                        },
+                                        onClick = { showCreateForm = false; newDay = "" },
                                         modifier = Modifier.weight(1f),
                                         shape = RoundedCornerShape(12.dp)
-                                    ) {
-                                        Text("Cancelar")
-                                    }
+                                    ) { Text("Cancelar") }
                                     Button(
                                         onClick = { createItinerary() },
                                         modifier = Modifier.weight(1f),
@@ -250,15 +245,8 @@ fun ItineraryScreen(onBack: () -> Unit) {
                                         colors = ButtonDefaults.buttonColors(containerColor = Terracota),
                                         shape = RoundedCornerShape(12.dp)
                                     ) {
-                                        if (isSubmitting) {
-                                            CircularProgressIndicator(
-                                                color = CremaCalido,
-                                                modifier = Modifier.size(20.dp),
-                                                strokeWidth = 2.dp
-                                            )
-                                        } else {
-                                            Text("Crear", color = CremaCalido)
-                                        }
+                                        if (isSubmitting) CircularProgressIndicator(color = CremaCalido, modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                                        else Text("Crear", color = CremaCalido)
                                     }
                                 }
                             }
@@ -268,20 +256,13 @@ fun ItineraryScreen(onBack: () -> Unit) {
                     if (!showCreateForm) {
                         Button(
                             onClick = { showCreateForm = true },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp)
-                                .height(52.dp),
+                            modifier = Modifier.fillMaxWidth().padding(16.dp).height(52.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = Terracota),
                             shape = RoundedCornerShape(16.dp)
                         ) {
                             Icon(Icons.Default.Add, contentDescription = null)
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = "Crear Itinerario",
-                                fontWeight = FontWeight.Bold,
-                                color = CremaCalido
-                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text("Crear Itinerario", fontWeight = FontWeight.Bold, color = CremaCalido)
                         }
                     }
                 }

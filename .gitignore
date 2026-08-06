@@ -6,3 +6,13 @@ venv/
 .env
 *.db
 .DS_Store
+
+# Artefactos de compilacion de LaTeX
+DBP.aux
+DBP.log
+DBP.out
+DBP.toc
+DBP.synctex.gz
+
+# Archivos de Android Studio
+frontend/.idea/

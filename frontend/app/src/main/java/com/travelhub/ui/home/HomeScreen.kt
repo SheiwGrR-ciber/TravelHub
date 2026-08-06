@@ -41,6 +41,7 @@ fun HomeScreen(
     onNavigateToCostCalc: () -> Unit,
     onNavigateToProfile: () -> Unit,
     onNavigateToProviderPanel: () -> Unit,
+    onNavigateToAdminPanel: () -> Unit = {},
     onLogout: () -> Unit
 ) {
     val scope = rememberCoroutineScope()
@@ -120,7 +121,11 @@ fun HomeScreen(
                 )
             }
 
-            if (userRole == "prestador") {
+            if (userRole == "admin") {
+                item {
+                    AdminQuickActions(onNavigateToAdminPanel = onNavigateToAdminPanel)
+                }
+            } else if (userRole == "prestador") {
                 item {
                     ProviderQuickActions(
                         onNavigateToProviderPanel = onNavigateToProviderPanel,
@@ -141,12 +146,12 @@ fun HomeScreen(
 
             item {
                 Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = if (userRole == "prestador") "Tus servicios" else "Actividad reciente",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = TextoOscuro,
-                    fontWeight = FontWeight.SemiBold
-                )
+                    Text(
+                        text = if (userRole == "admin") "Panel de Administración" else if (userRole == "prestador") "Tus servicios" else "Actividad reciente",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = TextoOscuro,
+                        fontWeight = FontWeight.SemiBold
+                    )
             }
 
             if (isLoadingData) {
@@ -158,6 +163,20 @@ fun HomeScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         CircularProgressIndicator(color = Terracota)
+                    }
+                }
+            } else if (userRole == "admin") {
+                item {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(containerColor = Superficie),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text("Bienvenido Administrador", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = TextoOscuro)
+                            Spacer(Modifier.height(8.dp))
+                            Text("Usa el panel de administración para gestionar prestadores pendientes.", style = MaterialTheme.typography.bodyMedium, color = TextoClaro)
+                        }
                     }
                 }
             } else if (userRole == "prestador") {
@@ -197,6 +216,16 @@ fun HomeScreen(
                 Spacer(modifier = Modifier.height(16.dp))
             }
         }
+    }
+}
+
+@Composable
+private fun AdminQuickActions(onNavigateToAdminPanel: () -> Unit) {
+    Column {
+        ActionCardItem(
+            card = ActionCard("Gestionar Prestadores", "Aprueba o rechaza cuentas de prestadores", Icons.Default.VerifiedUser, onNavigateToAdminPanel),
+            modifier = Modifier.fillMaxWidth()
+        )
     }
 }
 

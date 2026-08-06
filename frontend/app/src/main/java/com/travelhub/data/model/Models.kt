@@ -46,6 +46,24 @@ data class ReviewResponse(
 )
 data class CostCalculateRequest(val booking_ids: List<Int>)
 data class GoogleAuthRequest(val id_token: String)
+data class PrestadorPending(val id: Int, val name: String, val email: String, val created_at: String)
+
+data class RoutePoint(val lat: Double, val lng: Double, val name: String = "", val order: Int = 0)
+data class DirectionsRequest(val origin: RoutePoint, val destination: RoutePoint, val waypoints: List<RoutePoint> = emptyList())
+data class LegResponse(val distance_m: Double, val distance_text: String, val duration_s: Double, val duration_text: String, val start_address: String, val end_address: String)
+data class DirectionsResponse(
+    val total_distance_m: Double, val total_distance_km: Double,
+    val total_duration_s: Double, val total_duration_min: Double,
+    val total_duration_text: String, val legs: List<LegResponse>,
+    val polyline: String, val source: String
+)
+data class ItineraryBooking(
+    val id: Int, val service_id: Int, val service_name: String,
+    val service_type: String, val service_location: String,
+    val date: String, val status: String, val total: Double
+)
+data class ItineraryUpdate(val route_data: Map<String, Any>)
+
 data class CostResponse(
     val total: Double, val breakdown: Map<String, Double>,
     val details: List<CostDetail>

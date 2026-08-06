@@ -144,7 +144,6 @@ fun VerifyEmailScreen(
             }
 
             Spacer(modifier = Modifier.height(32.dp))
-
             OutlinedTextField(
                 value = verificationCode,
                 onValueChange = { newVal ->

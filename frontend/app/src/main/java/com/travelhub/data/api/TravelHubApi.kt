@@ -103,6 +103,39 @@ interface TravelHubApi {
         @Path("booking_id") bookingId: Int
     ): Response<Map<String, Any>>
 
+    @PUT("itineraries/{id}")
+    suspend fun updateItinerary(
+        @Header("Authorization") token: String,
+        @Path("id") id: Int,
+        @Body itinerary: ItineraryUpdate
+    ): Response<ItineraryResponse>
+
+    @DELETE("itineraries/{id}")
+    suspend fun deleteItinerary(
+        @Header("Authorization") token: String,
+        @Path("id") id: Int
+    ): Response<Map<String, Any>>
+
+    @POST("itineraries/{id}/remove-booking/{booking_id}")
+    suspend fun removeBookingFromItinerary(
+        @Header("Authorization") token: String,
+        @Path("id") id: Int,
+        @Path("booking_id") bookingId: Int
+    ): Response<Map<String, Any>>
+
+    @GET("itineraries/{id}/bookings")
+    suspend fun getItineraryBookings(
+        @Header("Authorization") token: String,
+        @Path("id") id: Int
+    ): Response<List<ItineraryBooking>>
+
+    @POST("itineraries/{id}/directions")
+    suspend fun calculateDirections(
+        @Header("Authorization") token: String,
+        @Path("id") id: Int,
+        @Body request: DirectionsRequest
+    ): Response<DirectionsResponse>
+
     @POST("messages/")
     suspend fun sendMessage(
         @Header("Authorization") token: String,
@@ -131,4 +164,21 @@ interface TravelHubApi {
         @Header("Authorization") token: String,
         @Body request: CostCalculateRequest
     ): Response<CostResponse>
+
+    @GET("admin/prestadores-pendientes")
+    suspend fun getPendingPrestadores(
+        @Header("Authorization") token: String
+    ): Response<List<PrestadorPending>>
+
+    @POST("admin/aprobar/{user_id}")
+    suspend fun approvePrestador(
+        @Header("Authorization") token: String,
+        @Path("user_id") userId: Int
+    ): Response<Map<String, Any>>
+
+    @POST("admin/rechazar/{user_id}")
+    suspend fun rejectPrestador(
+        @Header("Authorization") token: String,
+        @Path("user_id") userId: Int
+    ): Response<Map<String, Any>>
 }

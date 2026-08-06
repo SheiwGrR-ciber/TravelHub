@@ -14,7 +14,9 @@ sealed class Screen(val route: String) {
         fun createRoute(serviceId: Int) = "new_booking/$serviceId"
     }
     data object Itinerary : Screen("itinerary")
-    data object CreateItinerary : Screen("create_itinerary")
+    data object ItineraryBuilder : Screen("itinerary_builder/{itineraryId}") {
+        fun createRoute(itineraryId: Int) = "itinerary_builder/$itineraryId"
+    }
     data object CostCalculator : Screen("cost_calculator")
     data object Chat : Screen("chat/{bookingId}/{serviceName}") {
         fun createRoute(bookingId: Int, serviceName: String) = "chat/$bookingId/$serviceName"
@@ -30,4 +32,5 @@ sealed class Screen(val route: String) {
     data object VerifyEmail : Screen("verify_email/{email}/{code}") {
         fun createRoute(email: String, code: String) = "verify_email/$email/$code"
     }
+    data object AdminPanel : Screen("admin_panel")
 }
