@@ -5,7 +5,18 @@ data class TokenResponse(val access_token: String, val token_type: String)
 data class UserCreate(val name: String, val email: String, val password: String, val role: String)
 data class VerifyRequest(val email: String, val code: String)
 data class ResendRequest(val email: String)
-data class UserResponse(val id: Int, val email: String, val role: String)
+data class UserResponse(
+    val id: Int, val name: String, val email: String, val role: String,
+    val phone: String? = null, val location: String? = null, val bio: String? = null,
+    val business_name: String? = null, val provider_type: String? = null,
+    val experience_years: Int? = null, val verified: Boolean = true,
+    val approved: Boolean = false
+)
+data class UserProfileUpdate(
+    val name: String, val phone: String?, val location: String?, val bio: String?,
+    val business_name: String? = null, val provider_type: String? = null,
+    val experience_years: Int? = null
+)
 data class ServiceCreate(
     val type: String, val name: String, val description: String,
     val price: Double, val location: String

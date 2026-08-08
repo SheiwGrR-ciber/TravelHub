@@ -28,24 +28,28 @@ import com.travelhub.data.api.ApiClient
 import com.travelhub.data.model.UserCreate
 import com.travelhub.ui.theme.*
 import kotlinx.coroutines.launch
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RegisterScreen(
     onRegisterSuccess: (email: String, code: String) -> Unit,
-    onGoToLogin: () -> Unit
+    onGoToLogin: () -> Unit,
+    registerViewModel: RegisterViewModel = viewModel()
 ) {
-    val scope = rememberCoroutineScope()
     val focusManager = LocalFocusManager.current
+    val uiState by registerViewModel.uiState.collectAsStateWithLifecycle()
 
-    var name by remember { mutableStateOf("") }
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var confirmPassword by remember { mutableStateOf("") }
-    var selectedRole by remember { mutableStateOf("turista") }
     var passwordVisible by remember { mutableStateOf(false) }
-    var isLoading by remember { mutableStateOf(false) }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(uiState.registrationCompleted) {
+        if (uiState.registrationCompleted) {
+            val registeredEmail = uiState.email
+            registerViewModel.consumeRegistrationCompleted()
+            onRegisterSuccess(registeredEmail, "")
+        }
+    }
 
     val roles = listOf(
         "turista" to "Turista",
@@ -113,8 +117,8 @@ fun RegisterScreen(
                     Spacer(modifier = Modifier.height(24.dp))
 
                     OutlinedTextField(
-                        value = name,
-                        onValueChange = { name = it },
+                        value = uiState.name,
+                        onValueChange = registerViewModel::updateName,
                         label = { Text("Nombre completo") },
                         leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) },
                         keyboardOptions = KeyboardOptions(
@@ -137,8 +141,8 @@ fun RegisterScreen(
                     Spacer(modifier = Modifier.height(12.dp))
 
                     OutlinedTextField(
-                        value = email,
-                        onValueChange = { email = it.trim() },
+                        value = uiState.email,
+                        onValueChange = registerViewModel::updateEmail,
                         label = { Text("Correo electrónico") },
                         leadingIcon = { Icon(Icons.Default.Email, contentDescription = null) },
                         keyboardOptions = KeyboardOptions(
@@ -161,8 +165,8 @@ fun RegisterScreen(
                     Spacer(modifier = Modifier.height(12.dp))
 
                     OutlinedTextField(
-                        value = password,
-                        onValueChange = { password = it },
+                        value = uiState.password,
+                        onValueChange = registerViewModel::updatePassword,
                         label = { Text("Contraseña") },
                         leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
                         trailingIcon = {
@@ -194,8 +198,8 @@ fun RegisterScreen(
                     Spacer(modifier = Modifier.height(12.dp))
 
                     OutlinedTextField(
-                        value = confirmPassword,
-                        onValueChange = { confirmPassword = it },
+                        value = uiState.confirmPassword,
+                        onValueChange = registerViewModel::updateConfirmPassword,
                         label = { Text("Confirmar contraseña") },
                         leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
                         visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
@@ -232,11 +236,11 @@ fun RegisterScreen(
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         roles.forEach { (value, label) ->
-                            val isSelected = selectedRole == value
+                            val isSelected = uiState.selectedRole == value
                             val icon: ImageVector = if (value == "turista") Icons.Default.Person else Icons.Default.Business
                             FilterChip(
                                 selected = isSelected,
-                                onClick = { selectedRole = value },
+                                onClick = { registerViewModel.selectRole(value) },
                                 label = { Text(label) },
                                 leadingIcon = { Icon(icon, contentDescription = null, modifier = Modifier.size(18.dp)) },
                                 modifier = Modifier.weight(1f),
@@ -250,9 +254,9 @@ fun RegisterScreen(
 
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    if (errorMessage != null) {
+                    if (uiState.errorMessage != null) {
                         Text(
-                            text = errorMessage!!,
+                            text = uiState.errorMessage.orEmpty(),
                             color = Error,
                             style = MaterialTheme.typography.bodySmall,
                             textAlign = TextAlign.Center,
@@ -267,17 +271,9 @@ fun RegisterScreen(
                     Button(
                         onClick = {
                             focusManager.clearFocus()
-                            scope.launch {
-                                performRegister(
-                                    name, email, password, confirmPassword, selectedRole,
-                                    onRegisterSuccess,
-                                    { isLoading = it },
-                                    { errorMessage = it }
-                                )
-                            }
+                            registerViewModel.register()
                         },
-                        enabled = !isLoading && name.isNotBlank() && email.isNotBlank()
-                                && password.isNotBlank() && confirmPassword.isNotBlank(),
+                        enabled = uiState.canSubmit,
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(50.dp),
@@ -287,7 +283,7 @@ fun RegisterScreen(
                         ),
                         shape = MaterialTheme.shapes.medium
                     ) {
-                        if (isLoading) {
+                        if (uiState.isLoading) {
                             CircularProgressIndicator(
                                 modifier = Modifier.size(24.dp),
                                 color = CremaCalido,
@@ -344,9 +340,7 @@ private suspend fun performRegister(
         }
         val response = ApiClient.api.register(UserCreate(name, email, password, role))
         if (response.isSuccessful) {
-            val body = response.body()
-            val code = body?.get("code") as? String ?: ""
-            onRegisterSuccess(email, code)
+            onRegisterSuccess(email, "")
         } else {
             val code = response.code()
             val msg = when (code) {

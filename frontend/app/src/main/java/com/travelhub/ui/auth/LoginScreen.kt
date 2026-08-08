@@ -32,21 +32,27 @@ import com.travelhub.data.model.LoginRequest
 import com.travelhub.ui.theme.*
 import com.travelhub.util.TokenManager
 import kotlinx.coroutines.launch
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreen(
     onLoginSuccess: () -> Unit,
-    onGoToRegister: () -> Unit
+    onGoToRegister: () -> Unit,
+    loginViewModel: LoginViewModel = viewModel()
 ) {
-    val scope = rememberCoroutineScope()
     val focusManager = LocalFocusManager.current
+    val uiState by loginViewModel.uiState.collectAsStateWithLifecycle()
 
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
-    var isLoading by remember { mutableStateOf(false) }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(uiState.loginCompleted) {
+        if (uiState.loginCompleted) {
+            loginViewModel.consumeLoginCompleted()
+            onLoginSuccess()
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -109,8 +115,8 @@ fun LoginScreen(
                     Spacer(modifier = Modifier.height(24.dp))
 
                     OutlinedTextField(
-                        value = email,
-                        onValueChange = { email = it.trim() },
+                        value = uiState.email,
+                        onValueChange = loginViewModel::updateEmail,
                         label = { Text("Correo electrónico") },
                         leadingIcon = { Icon(Icons.Default.Email, contentDescription = null) },
                         keyboardOptions = KeyboardOptions(
@@ -133,8 +139,8 @@ fun LoginScreen(
                     Spacer(modifier = Modifier.height(16.dp))
 
                     OutlinedTextField(
-                        value = password,
-                        onValueChange = { password = it },
+                        value = uiState.password,
+                        onValueChange = loginViewModel::updatePassword,
                         label = { Text("Contraseña") },
                         leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
                         trailingIcon = {
@@ -153,9 +159,7 @@ fun LoginScreen(
                         keyboardActions = KeyboardActions(
                             onDone = {
                                 focusManager.clearFocus()
-                                if (email.isNotBlank() && password.isNotBlank()) {
-                                    scope.launch { performLogin(email, password, onLoginSuccess, { isLoading = it }, { errorMessage = it }) }
-                                }
+                                loginViewModel.login()
                             }
                         ),
                         singleLine = true,
@@ -170,9 +174,9 @@ fun LoginScreen(
 
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    if (errorMessage != null) {
+                    if (uiState.errorMessage != null) {
                         Text(
-                            text = errorMessage!!,
+                            text = uiState.errorMessage.orEmpty(),
                             color = Error,
                             style = MaterialTheme.typography.bodySmall,
                             textAlign = TextAlign.Center,
@@ -187,11 +191,9 @@ fun LoginScreen(
                     Button(
                         onClick = {
                             focusManager.clearFocus()
-                            scope.launch {
-                                performLogin(email, password, onLoginSuccess, { isLoading = it }, { errorMessage = it })
-                            }
+                            loginViewModel.login()
                         },
-                        enabled = !isLoading && email.isNotBlank() && password.isNotBlank(),
+                        enabled = !uiState.isLoading && uiState.email.isNotBlank() && uiState.password.isNotBlank(),
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(50.dp),
@@ -201,7 +203,7 @@ fun LoginScreen(
                         ),
                         shape = MaterialTheme.shapes.medium
                     ) {
-                        if (isLoading) {
+                        if (uiState.isLoading) {
                             CircularProgressIndicator(
                                 modifier = Modifier.size(24.dp),
                                 color = CremaCalido,

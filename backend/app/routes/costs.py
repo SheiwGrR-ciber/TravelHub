@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
 from app.db.database import get_db
 from app.models.booking import Booking
-from app.models.service import Service
+from app.models.service import Service, SERVICE_TYPES
 from app.routes.auth import get_current_user
 from app.schemas.cost import CostCalculateRequest
 
@@ -13,7 +13,7 @@ def calculate_costs(body: CostCalculateRequest, db: Session = Depends(get_db), c
     booking_ids = body.booking_ids
     
     total = 0.0
-    breakdown = {"guia": 0.0, "hotel": 0.0}
+    breakdown = {t: 0.0 for t in SERVICE_TYPES}
     details = []
 
     for booking_id in booking_ids:

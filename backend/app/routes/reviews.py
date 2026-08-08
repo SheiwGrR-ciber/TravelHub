@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Query
 from sqlalchemy.orm import Session
 from app.db.database import get_db
 from app.models.review import Review
@@ -50,10 +50,20 @@ def create_review(review: ReviewCreate, db: Session = Depends(get_db), current_u
     return new_review
 
 @router.get("/service/{service_id}")
-def get_service_reviews(service_id: int, db: Session = Depends(get_db)):
-    reviews = db.query(Review).filter(Review.service_id == service_id).order_by(Review.created_at.desc()).all()
+def get_service_reviews(
+    service_id: int,
+    db: Session = Depends(get_db),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(20, ge=1, le=100)
+):
+    reviews = db.query(Review).filter(Review.service_id == service_id).order_by(Review.created_at.desc()).offset(skip).limit(limit).all()
     return reviews
 
 @router.get("/my")
-def get_my_reviews(db: Session = Depends(get_db), current_user = Depends(get_current_user)):
-    return db.query(Review).filter(Review.tourist_id == current_user["id"]).all()
+def get_my_reviews(
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(20, ge=1, le=100)
+):
+    return db.query(Review).filter(Review.tourist_id == current_user["id"]).order_by(Review.created_at.desc()).offset(skip).limit(limit).all()

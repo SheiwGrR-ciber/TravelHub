@@ -1,4 +1,4 @@
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, Query, HTTPException
 from sqlalchemy.orm import Session
 from app.db.database import get_db
 from app.models.message import Message
@@ -6,6 +6,8 @@ from app.models.booking import Booking
 from app.models.service import Service
 from app.models.user import User
 import json
+import jwt
+from app.config import SECRET_KEY, ALGORITHM
 
 router = APIRouter()
 
@@ -32,33 +34,56 @@ class ConnectionManager:
 
 manager = ConnectionManager()
 
-@router.websocket("/ws/chat/{user_id}")
-async def websocket_chat(websocket: WebSocket, user_id: int):
-    await manager.connect(websocket, user_id)
+async def get_user_from_token(token: str, db: Session) -> User:
     try:
-        while True:
-            data = await websocket.receive_json()
-            action = data.get("action")
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        email = payload.get("sub")
+        if email is None:
+            return None
+        user = db.query(User).filter(User.email == email).first()
+        return user
+    except jwt.InvalidTokenError:
+        return None
 
-            if action == "send_message":
-                booking_id = data["booking_id"]
-                receiver_id = data["receiver_id"]
-                content = data["content"]
+@router.websocket("/ws/chat")
+async def websocket_chat(websocket: WebSocket, token: str = Query(...)):
+    db = next(get_db())
+    try:
+        user = await get_user_from_token(token, db)
+        if not user:
+            await websocket.close(code=4001, reason="Token inválido")
+            return
 
-                db = next(get_db())
-                try:
+        await manager.connect(websocket, user.id)
+        try:
+            while True:
+                data = await websocket.receive_json()
+                action = data.get("action")
+
+                if action == "send_message":
+                    booking_id = data["booking_id"]
+                    receiver_id = data["receiver_id"]
+                    content = data["content"]
+
                     booking = db.query(Booking).filter(Booking.id == booking_id).first()
                     if not booking:
                         await websocket.send_json({"error": "Reserva no encontrada"})
                         continue
 
                     service = db.query(Service).filter(Service.id == booking.service_id).first()
-                    if user_id != booking.tourist_id and user_id != service.provider_id:
+                    if not service:
+                        await websocket.send_json({"error": "Servicio no encontrado"})
+                        continue
+                    if user.id != booking.tourist_id and user.id != service.provider_id:
                         await websocket.send_json({"error": "No autorizado"})
+                        continue
+                    allowed_receivers = {booking.tourist_id, service.provider_id} - {user.id}
+                    if receiver_id not in allowed_receivers:
+                        await websocket.send_json({"error": "El receptor no pertenece a esta reserva"})
                         continue
 
                     new_message = Message(
-                        sender_id=user_id,
+                        sender_id=user.id,
                         receiver_id=receiver_id,
                         booking_id=booking_id,
                         content=content
@@ -85,23 +110,27 @@ async def websocket_chat(websocket: WebSocket, user_id: int):
                         "action": "message_sent",
                         "message": message_data
                     })
-                finally:
-                    db.close()
 
-            elif action == "mark_read":
-                booking_id = data["booking_id"]
-                db = next(get_db())
-                try:
+                elif action == "mark_read":
+                    booking_id = data["booking_id"]
+                    booking = db.query(Booking).filter(Booking.id == booking_id).first()
+                    if not booking:
+                        await websocket.send_json({"error": "Reserva no encontrada"})
+                        continue
+                    service = db.query(Service).filter(Service.id == booking.service_id).first()
+                    if not service or user.id not in {booking.tourist_id, service.provider_id}:
+                        await websocket.send_json({"error": "No autorizado"})
+                        continue
                     db.query(Message).filter(
                         Message.booking_id == booking_id,
-                        Message.receiver_id == user_id,
+                        Message.receiver_id == user.id,
                         Message.read == False
                     ).update({"read": True})
                     db.commit()
 
                     await websocket.send_json({"action": "read_confirmed", "booking_id": booking_id})
-                finally:
-                    db.close()
 
-    except WebSocketDisconnect:
-        manager.disconnect(websocket, user_id)
+        except WebSocketDisconnect:
+            manager.disconnect(websocket, user.id)
+    finally:
+        db.close()

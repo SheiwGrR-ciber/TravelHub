@@ -21,6 +21,8 @@ import com.travelhub.ui.theme.*
 import com.travelhub.util.TokenManager
 import kotlinx.coroutines.launch
 import java.net.URLEncoder
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -29,52 +31,18 @@ fun ServiceDetailScreen(
     onBook: (Int) -> Unit,
     onChat: (Int, String) -> Unit,
     onViewReviews: (Int) -> Unit,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    serviceDetailViewModel: ServiceDetailViewModel = viewModel()
 ) {
-    val scope = rememberCoroutineScope()
-    var service by remember { mutableStateOf<ServiceResponse?>(null) }
-    var bookings by remember { mutableStateOf<List<BookingResponse>>(emptyList()) }
-    var isLoading by remember { mutableStateOf(true) }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
-
-    val token = TokenManager.getToken()
+    val uiState by serviceDetailViewModel.uiState.collectAsStateWithLifecycle()
     val userRole = TokenManager.getUserRole()
 
-    fun loadData() {
-        scope.launch {
-            isLoading = true
-            errorMessage = null
-            try {
-                val serviceResp = ApiClient.api.getService(serviceId)
-                if (serviceResp.isSuccessful) {
-                    service = serviceResp.body()
-                } else {
-                    errorMessage = "Error al cargar servicio: ${serviceResp.code()}"
-                    isLoading = false
-                    return@launch
-                }
-
-                if (token != null) {
-                    val bookingsResp = ApiClient.api.getBookings(token)
-                    if (bookingsResp.isSuccessful) {
-                        bookings = bookingsResp.body() ?: emptyList()
-                    }
-                }
-            } catch (e: Exception) {
-                errorMessage = "Error de conexi\u00f3n: ${e.localizedMessage}"
-            } finally {
-                isLoading = false
-            }
-        }
-    }
-
     LaunchedEffect(serviceId) {
-        loadData()
+        serviceDetailViewModel.load(serviceId)
     }
 
-    val confirmedBookingForService = remember(bookings, serviceId) {
-        bookings.find { it.service_id == serviceId && it.status == "confirmada" }
-    }
+    val service = uiState.service
+    val confirmedBookingForService = uiState.confirmedBooking(serviceId)
 
     Scaffold(
         topBar = {
@@ -94,7 +62,7 @@ fun ServiceDetailScreen(
         }
     ) { padding ->
         when {
-            isLoading -> {
+            uiState.isLoading -> {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -104,7 +72,7 @@ fun ServiceDetailScreen(
                     CircularProgressIndicator(color = Terracota)
                 }
             }
-            errorMessage != null -> {
+            uiState.errorMessage != null -> {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -112,10 +80,10 @@ fun ServiceDetailScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(text = errorMessage ?: "", color = Error)
+                        Text(text = uiState.errorMessage.orEmpty(), color = Error)
                         Spacer(modifier = Modifier.height(16.dp))
                         Button(
-                            onClick = { loadData() },
+                            onClick = { serviceDetailViewModel.load(serviceId, force = true) },
                             colors = ButtonDefaults.buttonColors(containerColor = Terracota)
                         ) {
                             Text("Reintentar")

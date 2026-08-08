@@ -4,3 +4,4 @@ from .booking import Booking
 from .itinerary import Itinerary
 from .message import Message
 from .review import Review
+from .file import File

@@ -1,12 +1,30 @@
 package com.travelhub.ui.auth
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Email
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -15,180 +33,94 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.travelhub.data.api.ApiClient
-import com.travelhub.data.model.VerifyRequest
-import com.travelhub.data.model.ResendRequest
-import com.travelhub.ui.theme.*
-import com.travelhub.util.TokenManager
-import kotlinx.coroutines.launch
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.travelhub.ui.theme.CremaCalido
+import com.travelhub.ui.theme.Error
+import com.travelhub.ui.theme.TealProfundo
+import com.travelhub.ui.theme.Terracota
+import com.travelhub.ui.theme.TextoClaro
+import com.travelhub.ui.theme.VerdeExito
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun VerifyEmailScreen(
     email: String,
     initialCode: String = "",
     onVerificationSuccess: () -> Unit,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    verifyEmailViewModel: VerifyEmailViewModel = viewModel()
 ) {
-    val scope = rememberCoroutineScope()
-    var verificationCode by remember { mutableStateOf(initialCode) }
-    var showCodeHint by remember { mutableStateOf(initialCode.isNotBlank()) }
-    var isLoading by remember { mutableStateOf(false) }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
-    var successMessage by remember { mutableStateOf<String?>(null) }
+    val uiState by verifyEmailViewModel.uiState.collectAsStateWithLifecycle()
 
-    fun verify() {
-        if (verificationCode.length != 6) {
-            errorMessage = "Ingresa el código de 6 dígitos"
-            return
-        }
-        scope.launch {
-            isLoading = true
-            errorMessage = null
-            try {
-                val response = ApiClient.api.verifyEmail(VerifyRequest(email, verificationCode))
-                if (response.isSuccessful) {
-                    val body = response.body()
-                    val token = body?.get("access_token") as? String
-                    if (token != null) {
-                        TokenManager.saveToken(token)
-                        TokenManager.saveUser(0, email, "turista")
-                    }
-                    onVerificationSuccess()
-                } else {
-                    errorMessage = "Código incorrecto o expirado"
-                }
-            } catch (e: Exception) {
-                errorMessage = "Error de conexión: ${e.localizedMessage}"
-            } finally {
-                isLoading = false
-            }
+    LaunchedEffect(initialCode) {
+        if (initialCode.isNotBlank() && uiState.code.isBlank()) {
+            verifyEmailViewModel.updateCode(initialCode)
         }
     }
-
-    fun resendCode() {
-        scope.launch {
-            isLoading = true
-            errorMessage = null
-            try {
-                val response = ApiClient.api.resendVerificationCode(ResendRequest(email))
-                if (response.isSuccessful) {
-                    successMessage = "Código reenviado a tu correo"
-                } else {
-                    errorMessage = "Error al reenviar código"
-                }
-            } catch (e: Exception) {
-                errorMessage = "Error de conexión: ${e.localizedMessage}"
-            } finally {
-                isLoading = false
-            }
+    LaunchedEffect(uiState.verificationCompleted) {
+        if (uiState.verificationCompleted) {
+            verifyEmailViewModel.consumeVerificationCompleted()
+            onVerificationSuccess()
         }
     }
 
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    colors = listOf(Terracota.copy(alpha = 0.15f), CremaCalido, CremaCalido)
-                )
-            )
+        modifier = Modifier.fillMaxSize().background(
+            Brush.verticalGradient(listOf(Terracota.copy(alpha = 0.15f), CremaCalido, CremaCalido))
+        )
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 32.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+            modifier = Modifier.fillMaxSize().padding(horizontal = 32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Top
         ) {
-            Spacer(modifier = Modifier.height(80.dp))
-
-            Icon(
-                Icons.Default.Email,
-                contentDescription = null,
-                tint = Terracota,
-                modifier = Modifier.size(64.dp)
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
+            Spacer(Modifier.height(80.dp))
+            Icon(Icons.Default.Email, null, tint = Terracota, modifier = Modifier.size(64.dp))
+            Spacer(Modifier.height(16.dp))
+            Text("Verifica tu correo", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Terracota)
             Text(
-                text = "Verifica tu correo",
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold,
-                color = Terracota,
-                textAlign = TextAlign.Center
-            )
-
-            Text(
-                text = "Enviamos un código a\n$email",
+                "Enviamos un código a\n$email",
                 style = MaterialTheme.typography.bodyMedium,
                 color = TextoClaro,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(top = 8.dp)
             )
-
-            if (showCodeHint && initialCode.isNotBlank()) {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = DoradoOscuro.copy(alpha = 0.15f)),
-                    shape = MaterialTheme.shapes.medium
-                ) {
-                    Text(
-                        text = "No te llegó el correo? Usa este código: $initialCode",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MarronOscuro,
-                        modifier = Modifier.padding(12.dp)
-                    )
-                }
-                Spacer(modifier = Modifier.height(16.dp))
-            }
-
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(Modifier.height(32.dp))
             OutlinedTextField(
-                value = verificationCode,
-                onValueChange = { newVal ->
-                    if (newVal.length <= 6) verificationCode = newVal.filter(Char::isDigit)
-                },
+                value = uiState.code,
+                onValueChange = verifyEmailViewModel::updateCode,
                 label = { Text("Código de 6 dígitos") },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
-                shape = MaterialTheme.shapes.medium,
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = Terracota,
                     focusedLabelColor = Terracota,
                     cursorColor = Terracota
                 )
             )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            if (errorMessage != null) {
-                Text(text = errorMessage!!, color = Error, style = MaterialTheme.typography.bodySmall)
+            Spacer(Modifier.height(8.dp))
+            uiState.errorMessage?.let {
+                Text(it, color = Error, style = MaterialTheme.typography.bodySmall)
             }
-            if (successMessage != null) {
-                Text(text = successMessage!!, color = VerdeExito, style = MaterialTheme.typography.bodySmall)
+            uiState.successMessage?.let {
+                Text(it, color = VerdeExito, style = MaterialTheme.typography.bodySmall)
             }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
+            Spacer(Modifier.height(24.dp))
             Button(
-                onClick = { verify() },
-                enabled = !isLoading && verificationCode.length == 6,
+                onClick = { verifyEmailViewModel.verify(email) },
+                enabled = !uiState.isLoading && uiState.code.length == 6,
                 modifier = Modifier.fillMaxWidth().height(50.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Terracota),
-                shape = MaterialTheme.shapes.medium
+                colors = ButtonDefaults.buttonColors(containerColor = Terracota)
             ) {
-                if (isLoading) {
+                if (uiState.isLoading) {
                     CircularProgressIndicator(color = CremaCalido, modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
                 } else {
                     Text("Verificar", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
                 }
             }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            TextButton(onClick = { resendCode() }, enabled = !isLoading) {
+            Spacer(Modifier.height(16.dp))
+            TextButton(onClick = { verifyEmailViewModel.resend(email) }, enabled = !uiState.isLoading) {
                 Text("Reenviar código", color = TealProfundo, fontWeight = FontWeight.Medium)
             }
         }

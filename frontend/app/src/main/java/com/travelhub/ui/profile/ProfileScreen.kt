@@ -1,259 +1,91 @@
 package com.travelhub.ui.profile
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.travelhub.ui.theme.*
 import com.travelhub.util.TokenManager
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProfileScreen(onBack: () -> Unit) {
-    val userEmail = TokenManager.getUserEmail() ?: "usuario@email.com"
-    val userRole = TokenManager.getUserRole() ?: "turista"
-    val userId = TokenManager.getUserId()
+fun ProfileScreen(onBack: () -> Unit, profileViewModel: ProfileViewModel = viewModel()) {
+    val state by profileViewModel.uiState.collectAsStateWithLifecycle()
+    var logoutDialog by remember { mutableStateOf(false) }
 
-    val roleLabel = if (userRole == "prestador") "Prestador de Servicios" else "Turista"
-    val roleIcon = if (userRole == "prestador") Icons.Default.Business else Icons.Default.Person
+    if (logoutDialog) AlertDialog(
+        onDismissRequest = { logoutDialog = false },
+        title = { Text("Cerrar sesion") }, text = { Text("¿Deseas cerrar tu sesion?") },
+        confirmButton = { Button(onClick = { TokenManager.logout(); logoutDialog = false; onBack() }) { Text("Cerrar sesion") } },
+        dismissButton = { TextButton(onClick = { logoutDialog = false }) { Text("Cancelar") } }
+    )
 
-    var showLogoutDialog by remember { mutableStateOf(false) }
-
-    if (showLogoutDialog) {
-        AlertDialog(
-            onDismissRequest = { showLogoutDialog = false },
-            title = {
-                Text(
-                    text = "Cerrar Sesión",
-                    fontWeight = FontWeight.SemiBold,
-                    color = TextoOscuro
-                )
-            },
-            text = {
-                Text(
-                    text = "¿Estás seguro de que deseas cerrar sesión?",
-                    color = TextoClaro
-                )
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        showLogoutDialog = false
-                        TokenManager.logout()
-                        onBack()
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = Terracota)
-                ) {
-                    Text("Cerrar Sesión", color = CremaCalido)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showLogoutDialog = false }) {
-                    Text("Cancelar", color = TextoClaro)
-                }
-            },
-            containerColor = Superficie,
-            shape = RoundedCornerShape(16.dp)
+    Scaffold(topBar = {
+        TopAppBar(
+            title = { Text("Mi perfil") },
+            navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, "Volver") } },
+            colors = TopAppBarDefaults.topAppBarColors(containerColor = Terracota, titleContentColor = CremaCalido, navigationIconContentColor = CremaCalido)
         )
-    }
-
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = "Mi Perfil",
-                        fontWeight = FontWeight.Bold
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Terracota,
-                    titleContentColor = CremaCalido,
-                    navigationIconContentColor = CremaCalido
-                )
-            )
-        }
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .background(CremaCalido),
-            horizontalAlignment = Alignment.CenterHorizontally
+    }) { padding ->
+        if (state.isLoading) Box(Modifier.fillMaxSize().padding(padding)) { CircularProgressIndicator(Modifier.padding(48.dp)) }
+        else Column(
+            Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            Spacer(modifier = Modifier.height(32.dp))
+            Text("Datos personales", style = MaterialTheme.typography.titleLarge, color = TextoOscuro)
+            ProfileField("Nombre completo", state.name, profileViewModel::setName)
+            ProfileField("Correo electronico", state.email, {}, enabled = false)
+            ProfileField("Telefono", state.phone, profileViewModel::setPhone, KeyboardType.Phone)
+            ProfileField("Ciudad o ubicacion", state.location, profileViewModel::setLocation)
+            ProfileField("Acerca de mi", state.bio, profileViewModel::setBio, minLines = 3)
 
-            Box(
-                modifier = Modifier
-                    .size(96.dp)
-                    .clip(CircleShape)
-                    .background(
-                        brush = androidx.compose.ui.graphics.Brush.verticalGradient(
-                            colors = listOf(Terracota, TerracotaDark)
-                        )
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = userEmail.firstOrNull()?.uppercase() ?: "U",
-                    fontSize = 36.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = CremaCalido
-                )
-            }
+            AssistChip(onClick = {}, label = { Text(if (state.role == "prestador") "Prestador" else if (state.role == "admin") "Administrador" else "Turista") })
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Text(
-                text = userEmail,
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.SemiBold,
-                color = TextoOscuro
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Surface(
-                color = Terracota.copy(alpha = 0.12f),
-                shape = RoundedCornerShape(20.dp)
-            ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = roleIcon,
-                        contentDescription = null,
-                        tint = Terracota,
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = roleLabel,
-                        color = Terracota,
-                        fontWeight = FontWeight.Medium,
-                        fontSize = 14.sp
-                    )
+            if (state.role == "prestador") {
+                HorizontalDivider()
+                Text("Datos del prestador", style = MaterialTheme.typography.titleLarge, color = TextoOscuro)
+                ProfileField("Nombre comercial", state.businessName, profileViewModel::setBusinessName)
+                Text("Categoria principal", style = MaterialTheme.typography.labelLarge)
+                val types = listOf("guia" to "Guia", "hotel" to "Hotel", "restaurante" to "Restaurante", "traductor" to "Traductor", "transportista" to "Transportista")
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    types.forEach { (value, label) -> FilterChip(selected = state.providerType == value, onClick = { profileViewModel.setProviderType(value) }, label = { Text(label) }) }
                 }
+                ProfileField("Anos de experiencia", state.experienceYears, profileViewModel::setExperience, KeyboardType.Number)
+                Text(if (state.approved) "Cuenta aprobada por el administrador" else "Cuenta pendiente de aprobacion", color = if (state.approved) VerdeExito else Terracota)
             }
 
-            Spacer(modifier = Modifier.height(32.dp))
+            state.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+            state.success?.let { Text(it, color = VerdeExito) }
 
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp),
-                colors = CardDefaults.cardColors(containerColor = Superficie),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                shape = RoundedCornerShape(16.dp)
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(20.dp)
-                ) {
-                    ProfileInfoRow(
-                        icon = Icons.Default.Email,
-                        label = "Correo electrónico",
-                        value = userEmail
-                    )
-                    HorizontalDivider(
-                        modifier = Modifier.padding(vertical = 12.dp),
-                        color = TextoClaro.copy(alpha = 0.2f)
-                    )
-                    ProfileInfoRow(
-                        icon = Icons.Default.Badge,
-                        label = "Tipo de cuenta",
-                        value = roleLabel
-                    )
-                    HorizontalDivider(
-                        modifier = Modifier.padding(vertical = 12.dp),
-                        color = TextoClaro.copy(alpha = 0.2f)
-                    )
-                    ProfileInfoRow(
-                        icon = Icons.Default.Numbers,
-                        label = "ID de usuario",
-                        value = "#$userId"
-                    )
-                }
+            Button(onClick = profileViewModel::save, enabled = !state.isSaving, modifier = Modifier.fillMaxWidth().height(52.dp)) {
+                if (state.isSaving) CircularProgressIndicator(Modifier.size(22.dp), strokeWidth = 2.dp) else Text("Guardar cambios")
             }
-
-            Spacer(modifier = Modifier.weight(1f))
-
-            Button(
-                onClick = { showLogoutDialog = true },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp)
-                    .height(50.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MarronOscuro
-                ),
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Icon(
-                    Icons.Default.Logout,
-                    contentDescription = null,
-                    modifier = Modifier.size(20.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = "Cerrar Sesión",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold
-                )
+            OutlinedButton(onClick = { logoutDialog = true }, modifier = Modifier.fillMaxWidth()) {
+                Icon(Icons.Default.Logout, null); Spacer(Modifier.width(8.dp)); Text("Cerrar sesion")
             }
-
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(Modifier.height(12.dp))
         }
     }
 }
 
 @Composable
-private fun ProfileInfoRow(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    label: String,
-    value: String
+private fun ProfileField(
+    label: String, value: String, onChange: (String) -> Unit,
+    keyboardType: KeyboardType = KeyboardType.Text, enabled: Boolean = true, minLines: Int = 1
 ) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = TealProfundo,
-            modifier = Modifier.size(22.dp)
-        )
-        Spacer(modifier = Modifier.width(12.dp))
-        Column {
-            Text(
-                text = label,
-                style = MaterialTheme.typography.bodySmall,
-                color = TextoClaro
-            )
-            Text(
-                text = value,
-                style = MaterialTheme.typography.bodyLarge,
-                color = TextoOscuro,
-                fontWeight = FontWeight.Medium
-            )
-        }
-    }
+    OutlinedTextField(
+        value = value, onValueChange = onChange, label = { Text(label) }, enabled = enabled,
+        modifier = Modifier.fillMaxWidth(), minLines = minLines,
+        keyboardOptions = KeyboardOptions(keyboardType = keyboardType), singleLine = minLines == 1
+    )
 }

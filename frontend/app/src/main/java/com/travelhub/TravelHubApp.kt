@@ -43,8 +43,8 @@ fun TravelHubApp() {
         }
         composable(Screen.Register.route) {
             RegisterScreen(
-                onRegisterSuccess = { email, code ->
-                    navController.navigate(Screen.VerifyEmail.createRoute(email, code)) {
+                onRegisterSuccess = { _, _ ->
+                    navController.navigate(Screen.Login.route) {
                         popUpTo(Screen.Register.route) { inclusive = true }
                     }
                 },

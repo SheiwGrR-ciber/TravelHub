@@ -5,6 +5,7 @@ __pycache__/
 venv/
 .env
 *.db
+*.bak
 .DS_Store
 
 # Artefactos de compilacion de LaTeX
@@ -16,3 +17,4 @@ DBP.synctex.gz
 
 # Archivos de Android Studio
 frontend/.idea/
+frontend/.kotlin/
