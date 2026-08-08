@@ -1,20 +1,18 @@
 import jwt
 import os
+import bcrypt
 from datetime import datetime, timedelta, timezone
 from fastapi import Depends
 from fastapi.security import OAuth2PasswordBearer
 from fastapi import APIRouter, HTTPException
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
-from passlib.context import CryptContext
 
 from app.db.database import get_db
 from app.models.user import User
 from app.schemas.token import Token, LoginRequest
 from app.schemas.user import UserCreate, UserProfileUpdate
 from app.config import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES, GOOGLE_CLIENT_ID
-
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -39,10 +37,13 @@ class GoogleAuthRequest(BaseModel):
     id_token: str
 
 def hash_password(password: str) -> str:
-    return pwd_context.hash(password)
+    return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
 
 def verify_password(password: str, hashed: str) -> bool:
-    return pwd_context.verify(password, hashed)
+    try:
+        return bcrypt.checkpw(password.encode("utf-8"), hashed.encode("utf-8"))
+    except (TypeError, ValueError, AttributeError):
+        return False
 
 def create_access_token(data: dict):
     to_encode = data.copy()
