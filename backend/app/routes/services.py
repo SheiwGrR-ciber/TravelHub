@@ -1,6 +1,7 @@
+
 from fastapi import APIRouter, HTTPException, Depends, Query
 from app.db.database import get_db
-from app.models.service import Service
+from app.models.service import Service, SERVICE_TYPES
 from app.schemas.service import ServiceCreate, ServiceUpdate
 from app.routes.auth import get_current_user
 from sqlalchemy.orm import Session
@@ -31,12 +32,14 @@ def create_service(service: ServiceCreate, db: Session = Depends(get_db), curren
 @router.get("")
 def get_services(
     db: Session = Depends(get_db),
-    type: str = Query(None, description="Filtrar por tipo: guia, hotel"),
+    type: str = Query(None, description=f"Filtrar por tipo: {', '.join(SERVICE_TYPES)}"),
     location: str = Query(None, description="Filtrar por ubicación"),
     min_price: float = Query(None, description="Precio mínimo"),
     max_price: float = Query(None, description="Precio máximo"),
     min_rating: float = Query(None, description="Calificación mínima"),
-    available: bool = Query(None, description="Disponible")
+    available: bool = Query(None, description="Disponible"),
+    skip: int = Query(0, ge=0, description="Registros a saltar"),
+    limit: int = Query(20, ge=1, le=100, description="Límite de resultados"),
 ):
     query = db.query(Service)
     
@@ -53,7 +56,7 @@ def get_services(
     if available is not None:
         query = query.filter(Service.available == available)
     
-    return query.all()
+    return query.offset(skip).limit(limit).all()
 
 @router.get("/{service_id}")
 def get_service(service_id: int, db: Session = Depends(get_db)):

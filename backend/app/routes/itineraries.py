@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Query
 from sqlalchemy.orm import Session
 from app.db.database import get_db
 from app.models.itinerary import Itinerary
@@ -25,8 +25,13 @@ def create_itinerary(itinerary: ItineraryCreate, db: Session = Depends(get_db), 
     return new_itinerary
 
 @router.get("")
-def get_itineraries(db: Session = Depends(get_db), current_user = Depends(get_current_user)):
-    return db.query(Itinerary).filter(Itinerary.tourist_id == current_user["id"]).all()
+def get_itineraries(
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(20, ge=1, le=100)
+):
+    return db.query(Itinerary).filter(Itinerary.tourist_id == current_user["id"]).order_by(Itinerary.day).offset(skip).limit(limit).all()
 
 @router.get("/{itinerary_id}")
 def get_itinerary(itinerary_id: int, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
@@ -71,10 +76,12 @@ def add_booking_to_itinerary(itinerary_id: int, booking_id: int, db: Session = D
         raise HTTPException(status_code=404, detail="Reserva no encontrada")
     if booking.tourist_id != current_user["id"]:
         raise HTTPException(status_code=403, detail="No autorizado")
-    if "booking_ids" not in itinerary.route_data:
-        itinerary.route_data["booking_ids"] = []
-    if booking_id not in itinerary.route_data["booking_ids"]:
-        itinerary.route_data["booking_ids"].append(booking_id)
+    route_data = dict(itinerary.route_data or {})
+    booking_ids = list(route_data.get("booking_ids", []))
+    if booking_id not in booking_ids:
+        booking_ids.append(booking_id)
+    route_data["booking_ids"] = booking_ids
+    itinerary.route_data = route_data
     db.commit()
     return {"message": "Reserva agregada al itinerario"}
 
@@ -85,8 +92,12 @@ def remove_booking_from_itinerary(itinerary_id: int, booking_id: int, db: Sessio
         raise HTTPException(status_code=404, detail="Itinerario no encontrado")
     if itinerary.tourist_id != current_user["id"]:
         raise HTTPException(status_code=403, detail="No autorizado")
-    if "booking_ids" in itinerary.route_data and booking_id in itinerary.route_data["booking_ids"]:
-        itinerary.route_data["booking_ids"].remove(booking_id)
+    route_data = dict(itinerary.route_data or {})
+    booking_ids = list(route_data.get("booking_ids", []))
+    if booking_id in booking_ids:
+        booking_ids.remove(booking_id)
+        route_data["booking_ids"] = booking_ids
+        itinerary.route_data = route_data
         db.commit()
     return {"message": "Reserva eliminada del itinerario"}
 
@@ -117,9 +128,11 @@ def get_itinerary_bookings(itinerary_id: int, db: Session = Depends(get_db), cur
     return result
 
 @router.post("/{itinerary_id}/directions")
-def calculate_directions(itinerary_id: int, req: DirectionsRequest, current_user = Depends(get_current_user)):
+def calculate_directions(itinerary_id: int, req: DirectionsRequest, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
     itinerary = db.query(Itinerary).filter(Itinerary.id == itinerary_id).first()
-    if not itinerary or itinerary.tourist_id != current_user["id"]:
+    if not itinerary:
+        raise HTTPException(status_code=404, detail="Itinerario no encontrado")
+    if itinerary.tourist_id != current_user["id"]:
         raise HTTPException(status_code=403, detail="No autorizado")
     result = get_directions(
         origin_lat=req.origin.lat,

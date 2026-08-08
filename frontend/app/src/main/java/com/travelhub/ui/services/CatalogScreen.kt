@@ -17,49 +17,21 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.travelhub.data.api.ApiClient
 import com.travelhub.data.model.ServiceResponse
 import com.travelhub.ui.theme.*
-import kotlinx.coroutines.launch
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CatalogScreen(
     onServiceClick: (Int) -> Unit,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    catalogViewModel: CatalogViewModel = viewModel()
 ) {
-    val scope = rememberCoroutineScope()
-    var services by remember { mutableStateOf<List<ServiceResponse>>(emptyList()) }
-    var isLoading by remember { mutableStateOf(true) }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
-    var selectedFilter by remember { mutableStateOf("todos") }
+    val uiState by catalogViewModel.uiState.collectAsStateWithLifecycle()
 
     val filters = listOf("todos", "guia", "hotel")
-
-    fun loadServices(type: String?) {
-        scope.launch {
-            isLoading = true
-            errorMessage = null
-            try {
-                val response = ApiClient.api.getServices(
-                    type = if (type == "todos") null else type
-                )
-                if (response.isSuccessful) {
-                    services = response.body() ?: emptyList()
-                } else {
-                    errorMessage = "Error al cargar servicios: ${response.code()}"
-                }
-            } catch (e: Exception) {
-                errorMessage = "Error de conexi\u00f3n: ${e.localizedMessage}"
-            } finally {
-                isLoading = false
-            }
-        }
-    }
-
-    LaunchedEffect(selectedFilter) {
-        loadServices(selectedFilter)
-    }
 
     Scaffold(
         topBar = {
@@ -92,8 +64,8 @@ fun CatalogScreen(
             ) {
                 filters.forEach { filter ->
                     FilterChip(
-                        selected = selectedFilter == filter,
-                        onClick = { selectedFilter = filter },
+                        selected = uiState.selectedFilter == filter,
+                        onClick = { catalogViewModel.selectFilter(filter) },
                         label = {
                             Text(
                                 when (filter) {
@@ -113,7 +85,7 @@ fun CatalogScreen(
             }
 
             when {
-                isLoading -> {
+                uiState.isLoading -> {
                     Box(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
@@ -121,20 +93,20 @@ fun CatalogScreen(
                         CircularProgressIndicator(color = Terracota)
                     }
                 }
-                errorMessage != null -> {
+                uiState.errorMessage != null -> {
                     Box(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text(
-                                text = errorMessage ?: "",
+                                text = uiState.errorMessage.orEmpty(),
                                 color = Error,
                                 style = MaterialTheme.typography.bodyLarge
                             )
                             Spacer(modifier = Modifier.height(16.dp))
                             Button(
-                                onClick = { loadServices(selectedFilter) },
+                                onClick = catalogViewModel::loadServices,
                                 colors = ButtonDefaults.buttonColors(containerColor = Terracota)
                             ) {
                                 Text("Reintentar")
@@ -142,7 +114,7 @@ fun CatalogScreen(
                         }
                     }
                 }
-                services.isEmpty() -> {
+                uiState.services.isEmpty() -> {
                     Box(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
@@ -160,7 +132,7 @@ fun CatalogScreen(
                         contentPadding = PaddingValues(16.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        items(services) { service ->
+                        items(uiState.services, key = { it.id }) { service ->
                             ServiceCard(
                                 service = service,
                                 onClick = { onServiceClick(service.id) }

@@ -1,19 +1,20 @@
 import jwt
-import hashlib
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from fastapi import Depends
 from fastapi.security import OAuth2PasswordBearer
 from fastapi import APIRouter, HTTPException
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
+from passlib.context import CryptContext
 
 from app.db.database import get_db
 from app.models.user import User
 from app.schemas.token import Token, LoginRequest
 from app.schemas.user import UserCreate
-from app.config import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
-from app.email_utils import generate_verification_code, send_verification_email, SMTP_USER
+from app.config import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES, GOOGLE_CLIENT_ID
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -29,17 +30,14 @@ class GoogleAuthRequest(BaseModel):
     id_token: str
 
 def hash_password(password: str) -> str:
-    salt = os.urandom(32).hex()
-    hash_obj = hashlib.sha256((salt + password).encode())
-    return f"{salt}:{hash_obj.hexdigest()}"
+    return pwd_context.hash(password)
 
 def verify_password(password: str, hashed: str) -> bool:
-    salt, hash_value = hashed.split(":")
-    return hashlib.sha256((salt + password).encode()).hexdigest() == hash_value
+    return pwd_context.verify(password, hashed)
 
 def create_access_token(data: dict):
     to_encode = data.copy()
-    expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
@@ -50,33 +48,29 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail="Email ya registrado")
 
     hashed = hash_password(user.password)
-    code = generate_verification_code()
-    code_expires = datetime.utcnow() + timedelta(minutes=10)
-
     new_user = User(
         name=user.name,
         email=user.email,
         password_hash=hashed,
         role=user.role,
-        verified=False,
+        verified=True,
         approved=False if user.role == "prestador" else True,
-        verification_code=code,
-        verification_code_expires=code_expires
+        verification_code=None,
+        verification_code_expires=None
     )
     db.add(new_user)
     db.commit()
 
-    send_verification_email(user.email, code)
 
     return {
         "message": "Usuario creado. Revisa tu correo para el código de verificación.",
         "id": new_user.id,
-        "email": new_user.email,
-        "code": code
+        "email": new_user.email
     }
 
 @router.post("/verify")
 def verify_email(body: VerifyRequest, db: Session = Depends(get_db)):
+    raise HTTPException(status_code=410, detail="La verificacion por correo ya no es necesaria")
     db_user = db.query(User).filter(User.email == body.email).first()
     if not db_user:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
@@ -87,7 +81,10 @@ def verify_email(body: VerifyRequest, db: Session = Depends(get_db)):
     if db_user.verification_code != body.code:
         raise HTTPException(status_code=400, detail="Código incorrecto")
 
-    if db_user.verification_code_expires and db_user.verification_code_expires < datetime.utcnow():
+    expires_at = db_user.verification_code_expires
+    if expires_at and expires_at.tzinfo is None:
+        expires_at = expires_at.replace(tzinfo=timezone.utc)
+    if expires_at and expires_at < datetime.now(timezone.utc):
         raise HTTPException(status_code=400, detail="Código expirado. Solicita uno nuevo.")
 
     db_user.verified = True
@@ -100,6 +97,7 @@ def verify_email(body: VerifyRequest, db: Session = Depends(get_db)):
 
 @router.post("/resend-code")
 def resend_verification_code(body: ResendRequest, db: Session = Depends(get_db)):
+    raise HTTPException(status_code=410, detail="La verificacion por correo ya no es necesaria")
     db_user = db.query(User).filter(User.email == body.email).first()
     if not db_user:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
@@ -109,7 +107,7 @@ def resend_verification_code(body: ResendRequest, db: Session = Depends(get_db))
 
     code = generate_verification_code()
     db_user.verification_code = code
-    db_user.verification_code_expires = datetime.utcnow() + timedelta(minutes=10)
+    db_user.verification_code_expires = datetime.now(timezone.utc) + timedelta(minutes=10)
     db.commit()
 
     send_verification_email(body.email, code)
@@ -131,10 +129,18 @@ def login(user: LoginRequest, db: Session = Depends(get_db)):
 def google_auth(body: GoogleAuthRequest, db: Session = Depends(get_db)):
     try:
         import requests
-        resp = requests.get(f"https://oauth2.googleapis.com/tokeninfo?id_token={body.id_token}")
+        resp = requests.get(
+            "https://oauth2.googleapis.com/tokeninfo",
+            params={"id_token": body.id_token},
+            timeout=10,
+        )
         if resp.status_code != 200:
             raise HTTPException(status_code=401, detail="Token de Google inválido")
         google_data = resp.json()
+        if not GOOGLE_CLIENT_ID:
+            raise HTTPException(status_code=503, detail="Google Sign-In no esta configurado")
+        if google_data.get("aud") != GOOGLE_CLIENT_ID:
+            raise HTTPException(status_code=401, detail="Token de Google no pertenece a esta aplicacion")
         email = google_data.get("email")
         name = google_data.get("name", email.split("@")[0])
 

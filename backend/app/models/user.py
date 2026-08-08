@@ -1,5 +1,6 @@
 from sqlalchemy import Column, Integer, String, Boolean, DateTime
 from sqlalchemy.sql import func
+from sqlalchemy.orm import relationship
 from app.db.database import Base
 
 class User(Base):
@@ -15,3 +16,5 @@ class User(Base):
     verification_code = Column(String, nullable=True)
     verification_code_expires = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    services = relationship("Service", back_populates="provider")

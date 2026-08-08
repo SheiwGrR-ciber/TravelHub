@@ -62,6 +62,8 @@ import com.travelhub.ui.theme.TextoOscuro
 import com.travelhub.ui.theme.VerdeExito
 import com.travelhub.util.TokenManager
 import kotlinx.coroutines.launch
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -69,46 +71,11 @@ fun ProviderPanelScreen(
     onManageService: (Int) -> Unit,
     onCreateService: () -> Unit,
     onViewBookings: () -> Unit,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    providerPanelViewModel: ProviderPanelViewModel = viewModel()
 ) {
-    val scope = rememberCoroutineScope()
-    val token = TokenManager.getToken()
-    val currentUserId = TokenManager.getUserId()
-
-    var services by remember { mutableStateOf<List<ServiceResponse>>(emptyList()) }
-    var bookings by remember { mutableStateOf<List<BookingResponse>>(emptyList()) }
-    var isLoading by remember { mutableStateOf(true) }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
+    val uiState by providerPanelViewModel.uiState.collectAsStateWithLifecycle()
     var deleteTarget by remember { mutableStateOf<ServiceResponse?>(null) }
-
-    fun loadData() {
-        scope.launch {
-            isLoading = true
-            errorMessage = null
-            try {
-                val svcResp = ApiClient.api.getServices()
-                if (svcResp.isSuccessful) {
-                    val allServices = svcResp.body() ?: emptyList()
-                    services = allServices.filter { it.provider_id == currentUserId }
-                }
-
-                if (token != null) {
-                    val bookResp = ApiClient.api.getBookings(token)
-                    if (bookResp.isSuccessful) {
-                        bookings = bookResp.body() ?: emptyList()
-                    }
-                }
-            } catch (e: Exception) {
-                errorMessage = "Error de conexi\u00f3n: ${e.message}"
-            } finally {
-                isLoading = false
-            }
-        }
-    }
-
-    LaunchedEffect(Unit) {
-        loadData()
-    }
 
     if (deleteTarget != null) {
         AlertDialog(
@@ -120,16 +87,7 @@ fun ProviderPanelScreen(
                     onClick = {
                         val target = deleteTarget!!
                         deleteTarget = null
-                        if (token != null) {
-                            scope.launch {
-                                try {
-                                    val resp = ApiClient.api.deleteService(token, target.id)
-                                    if (resp.isSuccessful) {
-                                        services = services.filter { it.id != target.id }
-                                    }
-                                } catch (_: Exception) { }
-                            }
-                        }
+                        providerPanelViewModel.delete(target.id)
                     },
                     colors = ButtonDefaults.textButtonColors(contentColor = Error)
                 ) { Text("Eliminar") }
@@ -163,20 +121,20 @@ fun ProviderPanelScreen(
                 .padding(padding)
         ) {
             when {
-                isLoading -> {
+                uiState.isLoading -> {
                     CircularProgressIndicator(
                         modifier = Modifier.align(Alignment.Center),
                         color = Terracota
                     )
                 }
-                errorMessage != null -> {
+                uiState.errorMessage != null -> {
                     Column(
                         modifier = Modifier.align(Alignment.Center),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Text(errorMessage!!, color = Error)
+                        Text(uiState.errorMessage.orEmpty(), color = Error)
                         Spacer(Modifier.height(8.dp))
-                        OutlinedButton(onClick = { loadData() }) {
+                        OutlinedButton(onClick = providerPanelViewModel::load) {
                             Text("Reintentar")
                         }
                     }
@@ -203,7 +161,7 @@ fun ProviderPanelScreen(
                                         horizontalAlignment = Alignment.CenterHorizontally
                                     ) {
                                         Text(
-                                            "${services.size}",
+                                            "${uiState.services.size}",
                                             style = MaterialTheme.typography.headlineMedium,
                                             color = CremaCalido,
                                             fontWeight = FontWeight.Bold
@@ -224,7 +182,7 @@ fun ProviderPanelScreen(
                                         horizontalAlignment = Alignment.CenterHorizontally
                                     ) {
                                         Text(
-                                            "${bookings.size}",
+                                            "${uiState.bookings.size}",
                                             style = MaterialTheme.typography.headlineMedium,
                                             color = TextoOscuro,
                                             fontWeight = FontWeight.Bold
@@ -247,7 +205,7 @@ fun ProviderPanelScreen(
                             )
                         }
 
-                        if (services.isEmpty()) {
+                        if (uiState.services.isEmpty()) {
                             item {
                                 Text(
                                     "No tienes servicios registrados",
@@ -256,7 +214,7 @@ fun ProviderPanelScreen(
                                 )
                             }
                         } else {
-                            items(services, key = { it.id }) { service ->
+                            items(uiState.services, key = { it.id }) { service ->
                                 Card(
                                     modifier = Modifier.fillMaxWidth(),
                                     colors = CardDefaults.cardColors(containerColor = CremaCalido),

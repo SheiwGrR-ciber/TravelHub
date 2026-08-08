@@ -16,66 +16,21 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.travelhub.data.api.ApiClient
 import com.travelhub.data.model.BookingResponse
-import com.travelhub.data.model.BookingStatusUpdate
 import com.travelhub.ui.theme.*
 import com.travelhub.util.TokenManager
-import kotlinx.coroutines.launch
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BookingScreen(
     onChat: (Int, String) -> Unit,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    bookingViewModel: BookingViewModel = viewModel()
 ) {
-    val scope = rememberCoroutineScope()
-    var bookings by remember { mutableStateOf<List<BookingResponse>>(emptyList()) }
-    var isLoading by remember { mutableStateOf(true) }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
-
-    val token = TokenManager.getToken()
+    val uiState by bookingViewModel.uiState.collectAsStateWithLifecycle()
     val userRole = TokenManager.getUserRole()
-
-    fun loadBookings() {
-        if (token == null) return
-        scope.launch {
-            isLoading = true
-            errorMessage = null
-            try {
-                val response = ApiClient.api.getBookings(token)
-                if (response.isSuccessful) {
-                    bookings = response.body() ?: emptyList()
-                } else {
-                    errorMessage = "Error al cargar reservas: ${response.code()}"
-                }
-            } catch (e: Exception) {
-                errorMessage = "Error de conexi\u00f3n: ${e.localizedMessage}"
-            } finally {
-                isLoading = false
-            }
-        }
-    }
-
-    fun updateStatus(bookingId: Int, newStatus: String) {
-        if (token == null) return
-        scope.launch {
-            try {
-                val response = ApiClient.api.updateBookingStatus(
-                    token = token,
-                    id = bookingId,
-                    status = BookingStatusUpdate(newStatus)
-                )
-                if (response.isSuccessful) {
-                    loadBookings()
-                }
-            } catch (_: Exception) {}
-        }
-    }
-
-    LaunchedEffect(Unit) {
-        loadBookings()
-    }
 
     Scaffold(
         topBar = {
@@ -95,7 +50,7 @@ fun BookingScreen(
         }
     ) { padding ->
         when {
-            isLoading -> {
+            uiState.isLoading -> {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -105,7 +60,7 @@ fun BookingScreen(
                     CircularProgressIndicator(color = Terracota)
                 }
             }
-            errorMessage != null -> {
+            uiState.errorMessage != null -> {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -113,10 +68,10 @@ fun BookingScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(text = errorMessage ?: "", color = Error)
+                        Text(text = uiState.errorMessage.orEmpty(), color = Error)
                         Spacer(modifier = Modifier.height(16.dp))
                         Button(
-                            onClick = { loadBookings() },
+                            onClick = bookingViewModel::loadBookings,
                             colors = ButtonDefaults.buttonColors(containerColor = Terracota)
                         ) {
                             Text("Reintentar")
@@ -124,7 +79,7 @@ fun BookingScreen(
                     }
                 }
             }
-            bookings.isEmpty() -> {
+            uiState.bookings.isEmpty() -> {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -147,13 +102,13 @@ fun BookingScreen(
                     contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    items(bookings) { booking ->
+                    items(uiState.bookings, key = { it.id }) { booking ->
                         BookingCard(
                             booking = booking,
                             userRole = userRole,
                             onChat = { onChat(booking.id, "Servicio #${booking.service_id}") },
-                            onAccept = { updateStatus(booking.id, "confirmada") },
-                            onCancel = { updateStatus(booking.id, "cancelada") }
+                            onAccept = { bookingViewModel.updateStatus(booking.id, "confirmada") },
+                            onCancel = { bookingViewModel.updateStatus(booking.id, "cancelada") }
                         )
                     }
                 }
