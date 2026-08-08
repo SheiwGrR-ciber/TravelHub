@@ -148,8 +148,15 @@ class TravelHubRepository {
             RepositoryResult.Success(token to profile)
         }
 
-    suspend fun services(type: String?): RepositoryResult<List<ServiceResponse>> = runRequest {
-        val response = ApiClient.api.getServices(type = type)
+    suspend fun services(
+        type: String? = null,
+        location: String? = null,
+        minPrice: Double? = null,
+        maxPrice: Double? = null,
+        minRating: Double? = null,
+        available: Boolean? = null
+    ): RepositoryResult<List<ServiceResponse>> = runRequest {
+        val response = ApiClient.api.getServices(type, location, minPrice, maxPrice, minRating, available)
         if (response.isSuccessful) {
             RepositoryResult.Success(response.body().orEmpty())
         } else {
