@@ -23,6 +23,12 @@ interface TravelHubApi {
     @GET("auth/me")
     suspend fun getProfile(@Header("Authorization") token: String): Response<UserResponse>
 
+    @PUT("auth/me")
+    suspend fun updateProfile(
+        @Header("Authorization") token: String,
+        @Body profile: UserProfileUpdate
+    ): Response<UserResponse>
+
     @GET("services")
     suspend fun getServices(
         @Query("type") type: String? = null,

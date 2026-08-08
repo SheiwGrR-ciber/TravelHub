@@ -2,11 +2,29 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from app.db.database import engine, Base
+from sqlalchemy import inspect, text
 from app.models import User, Service, Booking, Itinerary, Message, Review, File
 from app.routes import auth, services, bookings, itineraries, messages, reviews, costs, ws, admin, files
 import os
 
 Base.metadata.create_all(bind=engine)
+
+def ensure_profile_columns():
+    existing = {column["name"] for column in inspect(engine).get_columns("users")}
+    columns = {
+        "phone": "VARCHAR",
+        "location": "VARCHAR",
+        "bio": "VARCHAR",
+        "business_name": "VARCHAR",
+        "provider_type": "VARCHAR",
+        "experience_years": "INTEGER",
+    }
+    with engine.begin() as connection:
+        for name, sql_type in columns.items():
+            if name not in existing:
+                connection.execute(text(f"ALTER TABLE users ADD COLUMN {name} {sql_type}"))
+
+ensure_profile_columns()
 
 app = FastAPI(title="TravelHub API")
 

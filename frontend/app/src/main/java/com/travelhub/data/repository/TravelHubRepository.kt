@@ -13,6 +13,7 @@ import com.travelhub.data.model.ServiceCreate
 import com.travelhub.data.model.ServiceUpdate
 import com.travelhub.data.model.ItineraryCreate
 import com.travelhub.data.model.ItineraryResponse
+import com.travelhub.data.model.UserProfileUpdate
 
 sealed interface RepositoryResult<out T> {
     data class Success<T>(val value: T) : RepositoryResult<T>
@@ -20,6 +21,22 @@ sealed interface RepositoryResult<out T> {
 }
 
 class TravelHubRepository {
+    suspend fun profile(token: String): RepositoryResult<UserResponse> = runRequest {
+        val response = ApiClient.api.getProfile(token)
+        val profile = response.body()
+        if (response.isSuccessful && profile != null) RepositoryResult.Success(profile)
+        else RepositoryResult.Error("No se pudo cargar el perfil", response.code())
+    }
+
+    suspend fun updateProfile(token: String, profile: UserProfileUpdate): RepositoryResult<UserResponse> = runRequest {
+        val response = ApiClient.api.updateProfile(token, profile)
+        val updated = response.body()
+        if (response.isSuccessful && updated != null) RepositoryResult.Success(updated)
+        else RepositoryResult.Error(
+            if (response.code() == 422) "Revisa los datos del perfil" else "No se pudo guardar el perfil",
+            response.code()
+        )
+    }
     suspend fun itineraries(token: String): RepositoryResult<List<ItineraryResponse>> = runRequest {
         val response = ApiClient.api.getItineraries(token)
         if (response.isSuccessful) RepositoryResult.Success(response.body().orEmpty())

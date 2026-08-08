@@ -11,13 +11,22 @@ from passlib.context import CryptContext
 from app.db.database import get_db
 from app.models.user import User
 from app.schemas.token import Token, LoginRequest
-from app.schemas.user import UserCreate
+from app.schemas.user import UserCreate, UserProfileUpdate
 from app.config import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES, GOOGLE_CLIENT_ID
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 router = APIRouter(prefix="/auth", tags=["auth"])
+
+def profile_response(user: User) -> dict:
+    return {
+        "id": user.id, "name": user.name, "email": user.email, "role": user.role,
+        "phone": user.phone, "location": user.location, "bio": user.bio,
+        "business_name": user.business_name, "provider_type": user.provider_type,
+        "experience_years": user.experience_years, "verified": user.verified,
+        "approved": user.approved,
+    }
 
 class VerifyRequest(BaseModel):
     email: str
@@ -176,7 +185,7 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
         if not user:
             raise HTTPException(status_code=401, detail="Usuario no encontrado")
 
-        return {"id": user.id, "email": user.email, "role": user.role, "approved": user.approved}
+        return profile_response(user)
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token expirado")
     except jwt.InvalidTokenError:
@@ -185,3 +194,24 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
 @router.get("/me")
 def get_me(current_user = Depends(get_current_user)):
     return current_user
+
+@router.put("/me")
+def update_me(profile: UserProfileUpdate, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+    user = db.query(User).filter(User.id == current_user["id"]).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    user.name = profile.name
+    user.phone = profile.phone
+    user.location = profile.location
+    user.bio = profile.bio
+    if user.role == "prestador":
+        user.business_name = profile.business_name
+        user.provider_type = profile.provider_type
+        user.experience_years = profile.experience_years
+    else:
+        user.business_name = None
+        user.provider_type = None
+        user.experience_years = None
+    db.commit()
+    db.refresh(user)
+    return profile_response(user)

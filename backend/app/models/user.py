@@ -11,6 +11,12 @@ class User(Base):
     email = Column(String, unique=True, index=True, nullable=False)
     password_hash = Column(String, nullable=False)
     role = Column(String, nullable=False)  # turista, prestador, admin
+    phone = Column(String, nullable=True)
+    location = Column(String, nullable=True)
+    bio = Column(String, nullable=True)
+    business_name = Column(String, nullable=True)
+    provider_type = Column(String, nullable=True)
+    experience_years = Column(Integer, nullable=True)
     verified = Column(Boolean, default=False)
     approved = Column(Boolean, default=False)
     verification_code = Column(String, nullable=True)
