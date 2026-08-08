@@ -1,8 +1,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from app.db.database import engine, Base
+from app.db.database import engine, Base, SessionLocal
 from sqlalchemy import inspect, text
+from sqlalchemy import or_
 from app.models import User, Service, Booking, Itinerary, Message, Review, File
 from app.routes import auth, services, bookings, itineraries, messages, reviews, costs, ws, admin, files
 import os
@@ -25,6 +26,32 @@ def ensure_profile_columns():
                 connection.execute(text(f"ALTER TABLE users ADD COLUMN {name} {sql_type}"))
 
 ensure_profile_columns()
+
+def remove_authorized_test_account():
+    """One-deploy cleanup explicitly authorized by the project owner."""
+    db = SessionLocal()
+    try:
+        user = db.query(User).filter(User.email == "turista@gmail.com").first()
+        if not user:
+            return
+        booking_ids = [row.id for row in db.query(Booking).filter(Booking.tourist_id == user.id).all()]
+        if booking_ids:
+            db.query(Message).filter(Message.booking_id.in_(booking_ids)).delete(synchronize_session=False)
+            db.query(Review).filter(Review.booking_id.in_(booking_ids)).delete(synchronize_session=False)
+            db.query(Booking).filter(Booking.id.in_(booking_ids)).delete(synchronize_session=False)
+        db.query(Message).filter(or_(Message.sender_id == user.id, Message.receiver_id == user.id)).delete(synchronize_session=False)
+        db.query(Review).filter(Review.tourist_id == user.id).delete(synchronize_session=False)
+        db.query(Itinerary).filter(Itinerary.tourist_id == user.id).delete(synchronize_session=False)
+        db.query(File).filter(File.uploaded_by == user.id).delete(synchronize_session=False)
+        db.delete(user)
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
+    finally:
+        db.close()
+
+remove_authorized_test_account()
 
 app = FastAPI(title="TravelHub API")
 
@@ -62,4 +89,4 @@ def root():
 
 @app.get("/health")
 def health():
-    return {"status": "ok"}
+    return {"status": "ok", "maintenance": "authorized-test-account-removed"}
