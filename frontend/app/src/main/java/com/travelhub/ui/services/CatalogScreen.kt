@@ -4,11 +4,13 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -21,6 +23,8 @@ import com.travelhub.data.model.ServiceResponse
 import com.travelhub.ui.theme.*
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -31,7 +35,26 @@ fun CatalogScreen(
 ) {
     val uiState by catalogViewModel.uiState.collectAsStateWithLifecycle()
 
-    val filters = listOf("todos", "guia", "hotel")
+    val categories = listOf(
+        "todos" to "Todos", "guia" to "Guías", "hotel" to "Hoteles",
+        "restaurante" to "Restaurantes", "traductor" to "Traductores",
+        "transportista" to "Transporte"
+    )
+    var showFilters by remember { mutableStateOf(false) }
+
+    if (showFilters) {
+        FilterDialog(
+            state = uiState,
+            onLocationChange = catalogViewModel::setLocation,
+            onMinPriceChange = catalogViewModel::setMinPrice,
+            onMaxPriceChange = catalogViewModel::setMaxPrice,
+            onRatingChange = catalogViewModel::setRating,
+            onAvailabilityChange = catalogViewModel::setAvailability,
+            onClear = { catalogViewModel.clearFilters(); showFilters = false },
+            onApply = { if (catalogViewModel.applyFilters()) showFilters = false },
+            onDismiss = { showFilters = false }
+        )
+    }
 
     Scaffold(
         topBar = {
@@ -56,31 +79,36 @@ fun CatalogScreen(
                 .padding(padding)
                 .background(CremaClaro)
         ) {
-            Row(
+            LazyRow(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                contentPadding = PaddingValues(end = 8.dp)
             ) {
-                filters.forEach { filter ->
+                items(categories) { (value, label) ->
                     FilterChip(
-                        selected = uiState.selectedFilter == filter,
-                        onClick = { catalogViewModel.selectFilter(filter) },
-                        label = {
-                            Text(
-                                when (filter) {
-                                    "todos" -> "Todos"
-                                    "guia" -> "Gu\u00edas"
-                                    "hotel" -> "Hoteles"
-                                    else -> filter
-                                }
-                            )
-                        },
+                        selected = uiState.category == value,
+                        onClick = { catalogViewModel.selectCategory(value) },
+                        label = { Text(label) },
                         colors = FilterChipDefaults.filterChipColors(
                             selectedContainerColor = TerracotaLight,
                             selectedLabelColor = MarronOscuro
                         )
                     )
+                }
+            }
+
+            Row(
+                Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text("${uiState.services.size} servicio(s)", color = TextoClaro, style = MaterialTheme.typography.bodySmall)
+                TextButton(onClick = { showFilters = true }) {
+                    Icon(Icons.Default.Tune, contentDescription = null)
+                    Spacer(Modifier.width(6.dp))
+                    Text(if (uiState.advancedFilterCount > 0) "Filtros (${uiState.advancedFilterCount})" else "Más filtros")
                 }
             }
 
@@ -143,6 +171,64 @@ fun CatalogScreen(
             }
         }
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun FilterDialog(
+    state: CatalogUiState,
+    onLocationChange: (String) -> Unit, onMinPriceChange: (String) -> Unit,
+    onMaxPriceChange: (String) -> Unit, onRatingChange: (Int) -> Unit,
+    onAvailabilityChange: (Boolean?) -> Unit, onClear: () -> Unit,
+    onApply: () -> Unit, onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Filtrar servicios") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                OutlinedTextField(
+                    value = state.location, onValueChange = onLocationChange,
+                    label = { Text("Ubicación") }, placeholder = { Text("Ejemplo: Puno") },
+                    singleLine = true, modifier = Modifier.fillMaxWidth()
+                )
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedTextField(
+                        value = state.minPrice, onValueChange = onMinPriceChange,
+                        label = { Text("Precio mín.") }, modifier = Modifier.weight(1f), singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+                    )
+                    OutlinedTextField(
+                        value = state.maxPrice, onValueChange = onMaxPriceChange,
+                        label = { Text("Precio máx.") }, modifier = Modifier.weight(1f), singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+                    )
+                }
+                Text("Calificación mínima", style = MaterialTheme.typography.labelLarge)
+                LazyRow {
+                    (0..5).forEach { rating ->
+                        item {
+                            FilterChip(
+                                selected = state.minRating == rating, onClick = { onRatingChange(rating) },
+                                label = { Text(if (rating == 0) "Todas" else "$rating★") },
+                                modifier = Modifier.padding(end = 4.dp)
+                            )
+                        }
+                    }
+                }
+                Text("Disponibilidad", style = MaterialTheme.typography.labelLarge)
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    listOf(true to "Disponibles", false to "No disponibles").forEach { (value, label) ->
+                        FilterChip(selected = state.availability == value, onClick = { onAvailabilityChange(value) }, label = { Text(label) })
+                    }
+                    FilterChip(selected = state.availability == null, onClick = { onAvailabilityChange(null) }, label = { Text("Todos") })
+                }
+                state.errorMessage?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+            }
+        },
+        confirmButton = { Button(onClick = onApply) { Text("Aplicar") } },
+        dismissButton = { Row { TextButton(onClick = onClear) { Text("Limpiar") }; TextButton(onClick = onDismiss) { Text("Cancelar") } } }
+    )
 }
 
 @Composable
